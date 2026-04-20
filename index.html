@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
+    <title>Zombie Mutant NFT</title>
+    <meta name="description" content="Turn your Farcaster profile pic into a zombie mutant NFT. AI-powered horror art on Base." />
+
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Zombie Mutant NFT 🧟" />
+    <meta property="og:description" content="Your Farcaster pfp → Zombie Mutant → NFT on Base. AI-powered horror art." />
+    <meta property="og:image" content="https://PLACEHOLDER.vercel.app/hero.png" />
+    <meta property="og:url" content="https://PLACEHOLDER.vercel.app" />
+
+    <!-- Farcaster Mini App Embed -->
+    <meta name="fc:miniapp" content='{"version":"1","imageUrl":"https://PLACEHOLDER.vercel.app/hero.png","button":{"title":"Become a Mutant 🧟","action":{"type":"launch_frame","name":"Zombie Mutant NFT","url":"https://PLACEHOLDER.vercel.app","splashImageUrl":"https://PLACEHOLDER.vercel.app/icon.png","splashBackgroundColor":"#0a0a0a"}}}' />
+    <meta name="fc:frame" content='{"version":"1","imageUrl":"https://PLACEHOLDER.vercel.app/hero.png","button":{"title":"Become a Mutant 🧟","action":{"type":"launch_frame","name":"Zombie Mutant NFT","url":"https://PLACEHOLDER.vercel.app","splashImageUrl":"https://PLACEHOLDER.vercel.app/icon.png","splashBackgroundColor":"#0a0a0a"}}}' />
+
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <style>
+      * { margin: 0; padding: 0; box-sizing: border-box; }
+
+      :root {
+        --bg: #0a0a0a;
+        --card: #141414;
+        --card-border: #1f1f1f;
+        --text: #e5e5e5;
+        --text-dim: #737373;
+        --green: #22c55e;
+        --green-dim: #166534;
+        --red: #ef4444;
+        --red-dim: #7f1d1d;
+        --purple: #a855f7;
+        --purple-dim: #6b21a8;
+        --accent: #22c55e;
+      }
+
+      body {
+        font-family: 'Inter', system-ui, sans-serif;
+        background: var(--bg);
+        color: var(--text);
+        min-height: 100dvh;
+        overflow-x: hidden;
+      }
+
+      .app {
+        max-width: 420px;
+        margin: 0 auto;
+        padding: 16px;
+        min-height: 100dvh;
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
+
+      /* Header */
+      .header {
+        text-align: center;
+        padding: 20px 0 8px;
+      }
+      .header h1 {
+        font-size: 1.5rem;
+        font-weight: 800;
+        background: linear-gradient(135deg, var(--green), var(--purple));
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .header p {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        margin-top: 4px;
+      }
+
+      /* User Card */
+      .user-card {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .user-card .avatar {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
+        object-fit: cover;
+        border: 2px solid var(--green);
+      }
+      .user-card .user-info {
+        flex: 1;
+      }
+      .user-card .username {
+        font-weight: 700;
+        font-size: 0.95rem;
+      }
+      .user-card .fid {
+        color: var(--text-dim);
+        font-size: 0.8rem;
+      }
+
+      /* Preview Area */
+      .preview-area {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 16px;
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        min-height: 200px;
+        justify-content: center;
+      }
+      .preview-area .images {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: center;
+        width: 100%;
+      }
+      .preview-area .img-box {
+        flex: 1;
+        text-align: center;
+      }
+      .preview-area .img-box img {
+        width: 100%;
+        max-width: 150px;
+        aspect-ratio: 1;
+        object-fit: cover;
+        border-radius: 12px;
+        border: 2px solid var(--card-border);
+      }
+      .preview-area .img-box .label {
+        font-size: 0.75rem;
+        color: var(--text-dim);
+        margin-top: 6px;
+      }
+      .preview-area .arrow {
+        font-size: 1.5rem;
+        flex-shrink: 0;
+      }
+      .preview-area .placeholder-text {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+        text-align: center;
+      }
+
+      /* Loading State */
+      .loading-overlay {
+        display: none;
+        flex-direction: column;
+        align-items: center;
+        gap: 12px;
+        padding: 20px;
+      }
+      .loading-overlay.active { display: flex; }
+
+      .spinner {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--card-border);
+        border-top-color: var(--green);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin { to { transform: rotate(360deg); } }
+
+      .loading-text {
+        color: var(--text-dim);
+        font-size: 0.85rem;
+      }
+
+      /* Buttons */
+      .btn {
+        width: 100%;
+        padding: 14px;
+        border: none;
+        border-radius: 12px;
+        font-family: inherit;
+        font-size: 0.95rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .btn:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+      }
+      .btn-primary {
+        background: var(--green);
+        color: #000;
+      }
+      .btn-primary:hover:not(:disabled) {
+        background: #16a34a;
+        transform: translateY(-1px);
+      }
+      .btn-secondary {
+        background: var(--card);
+        color: var(--text);
+        border: 1px solid var(--card-border);
+      }
+      .btn-secondary:hover:not(:disabled) {
+        border-color: var(--green);
+      }
+      .btn-mint {
+        background: linear-gradient(135deg, var(--purple), var(--green));
+        color: #000;
+      }
+      .btn-mint:hover:not(:disabled) {
+        opacity: 0.9;
+        transform: translateY(-1px);
+      }
+
+      /* Actions */
+      .actions {
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      /* Status */
+      .status-bar {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 12px;
+        padding: 12px 16px;
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        text-align: center;
+      }
+      .status-bar.success { border-color: var(--green-dim); color: var(--green); }
+      .status-bar.error { border-color: var(--red-dim); color: var(--red); }
+
+      /* Steps */
+      .steps {
+        display: flex;
+        gap: 8px;
+        justify-content: center;
+      }
+      .step {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--card-border);
+        transition: background 0.3s;
+      }
+      .step.active { background: var(--green); }
+      .step.done { background: var(--purple); }
+
+      /* Footer */
+      .footer {
+        margin-top: auto;
+        text-align: center;
+        padding: 12px;
+        color: var(--text-dim);
+        font-size: 0.7rem;
+      }
+      .footer a {
+        color: var(--green);
+        text-decoration: none;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app">
+      <!-- Header -->
+      <div class="header">
+        <h1>🧟 Zombie Mutant NFT</h1>
+        <p>Your Farcaster pfp, reimagined in undead horror</p>
+      </div>
+
+      <!-- Steps -->
+      <div class="steps">
+        <div class="step active" id="step-1"></div>
+        <div class="step" id="step-2"></div>
+        <div class="step" id="step-3"></div>
+        <div class="step" id="step-4"></div>
+      </div>
+
+      <!-- User Card -->
+      <div class="user-card" id="user-card" style="display:none">
+        <img class="avatar" id="user-avatar" src="" alt="avatar" />
+        <div class="user-info">
+          <div class="username" id="user-name">Loading...</div>
+          <div class="fid" id="user-fid">FID: —</div>
+        </div>
+      </div>
+
+      <!-- Preview -->
+      <div class="preview-area" id="preview-area">
+        <div class="placeholder-text" id="preview-placeholder">
+          Open in Farcaster to load your profile picture 🧟
+        </div>
+        <div class="images" id="preview-images" style="display:none">
+          <div class="img-box">
+            <img id="img-original" src="" alt="Original" />
+            <div class="label">Original</div>
+          </div>
+          <div class="arrow">→</div>
+          <div class="img-box">
+            <img id="img-mutant" src="" alt="Mutant" />
+            <div class="label">Mutant 🧟</div>
+          </div>
+        </div>
+        <div class="loading-overlay" id="loading">
+          <div class="spinner"></div>
+          <div class="loading-text" id="loading-text">Transforming into mutant...</div>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="actions">
+        <button class="btn btn-primary" id="btn-generate" disabled>
+          Generate Mutant 🧟
+        </button>
+        <button class="btn btn-mint" id="btn-mint" style="display:none">
+          Mint as NFT 🪙
+        </button>
+        <button class="btn btn-secondary" id="btn-share" style="display:none">
+          Share on Farcaster 📤
+        </button>
+      </div>
+
+      <!-- Status -->
+      <div class="status-bar" id="status">
+        Waiting for Farcaster context...
+      </div>
+
+      <!-- Footer -->
+      <div class="footer">
+        Built on Base · Powered by AI · <a href="#">Zombie Mutant NFT</a>
+      </div>
+    </div>
+
+    <!-- SDK init (separate file for reliability) -->
+    <script src="/farcaster-sdk-init.js"></script>
+    <script type="module" src="/src/app.js"></script>
+  </body>
+</html>
