@@ -7,9 +7,7 @@
     "build": "vite build",
     "preview": "vite preview"
   },
-  "dependencies": {
-    "@farcaster/miniapp-sdk": "^0.3.0"
-  },
+  "dependencies": {},
   "devDependencies": {
     "vite": "^6.3.5"
   }
