@@ -90,25 +90,33 @@ async function fetchContext(sdk) {
   }
 }
 
-// ─── Generate Mutant (Vision API + Pollinations.ai) ──────
+// ─── Generate Mutant (img2img — transform pfp asli) ──────
 async function generateMutant(pfpUrl, username, displayName) {
   const name = displayName || username || 'character';
 
-  // Call our serverless vision API
-  const response = await fetch('/api/analyze-pfp', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ pfpUrl, username, displayName }),
-  });
+  // Primary: img2img transformation (zombie effect ON the actual pfp)
+  if (pfpUrl) {
+    try {
+      const response = await fetch('/api/zombify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pfpUrl }),
+      });
 
-  if (!response.ok) {
-    // Fallback: simple text-to-image if API fails
-    console.warn('Vision API failed, using fallback prompt');
-    return generateMutantFallback(name);
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success && data.imageUrl) {
+          return data.imageUrl;
+        }
+      }
+      console.warn('img2img failed, falling back to text-to-image');
+    } catch (e) {
+      console.warn('img2img error:', e.message);
+    }
   }
 
-  const data = await response.json();
-  return data.imageUrl;
+  // Fallback: text-to-image (less accurate)
+  return generateMutantFallback(name);
 }
 
 // ─── Fallback (simple prompt, no vision) ─────────────────
