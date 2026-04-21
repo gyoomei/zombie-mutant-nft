@@ -404,7 +404,7 @@ async function mintNFT() {
   }
 
   // Contract address (deployed on Base)
-  const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // TODO: Replace after deployment
+  const CONTRACT_ADDRESS = '0x80A10b9Ce904Ba7BC7bc8478698DC2E759E0AD39';
   const CONTRACT_ABI = [
     "function mint(address to, string uri) payable returns (uint256)",
     "function totalMinted() view returns (uint256)",
