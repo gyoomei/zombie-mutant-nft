@@ -704,6 +704,10 @@ async function mintNFT() {
 
     await ensureBaseMainnet(provider);
 
+    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+    const mintReadContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
+    const nextSeriesNumber = Number(await mintReadContract.totalMinted()) + 1;
+
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     const userAddress = accounts[0];
@@ -716,8 +720,9 @@ async function mintNFT() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         imageBase64: state.mutantUrl,
-        name: `Zombie Mutant #${Date.now()}`,
+        name: `Zombie Mutant #${nextSeriesNumber}`,
         description: `Zombie mutant NFT generated from @${state.context?.user?.username || 'user'}'s Farcaster profile picture.`,
+        seriesNumber: nextSeriesNumber,
       }),
     });
 
@@ -733,8 +738,8 @@ async function mintNFT() {
     // 4. Prepare mint transaction without relying on estimateGas
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
-    const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
-    const mintTx = await readContract.getFunction('mint').populateTransaction(
+    const mintTxContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
+    const mintTx = await mintTxContract.getFunction('mint').populateTransaction(
       userAddress,
       ipfsData.tokenUri,
       { value: ethers.parseEther(MINT_PRICE) }
@@ -745,26 +750,25 @@ async function mintNFT() {
     const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
-    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
     const receipt = await publicProvider.waitForTransaction(tx.hash);
     if (!receipt) throw new Error('Transaction was sent but receipt was not found yet. Please check Basescan.');
 
     // 6. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
       try {
-        const parsed = readContract.interface.parseLog(log);
+        const parsed = mintTxContract.interface.parseLog(log);
         return parsed?.name === 'NFTMinted';
       } catch { return false; }
     });
 
-    let tokenId = '?';
+    let tokenNumber = '?';
     if (mintEvent) {
-      const parsed = contract.interface.parseLog(mintEvent);
-      tokenId = parsed.args.tokenId.toString();
+      const parsed = mintTxContract.interface.parseLog(mintEvent);
+      tokenNumber = (Number(parsed.args.tokenId) + 1).toString();
     }
 
     setStep(4);
-    setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
+    setStatus(`NFT Minted! Token #${tokenNumber} 🧟🎉`, 'success');
     spawnConfetti();
     screenShake();
     if (ipfsData.imageGateway) els.imgMutant.src = ipfsData.imageGateway;
@@ -775,7 +779,7 @@ async function mintNFT() {
 
     // Share option
     if (state.sdk?.actions?.composeCast) {
-      const shareText = `I just minted Zombie Mutant #${tokenId}! 🧟💀\n\nAI-generated zombie NFT from my Farcaster pfp on Base.\n\nhttps://basescan.org/tx/${tx.hash}\n\n#ZombieMutantNFT #Base #Farcaster`;
+      const shareText = `I just minted Zombie Mutant #${tokenNumber}! 🧟💀\n\nAI-generated zombie NFT from my Farcaster pfp on Base.\n\nhttps://basescan.org/tx/${tx.hash}\n\n#ZombieMutantNFT #Base #Farcaster`;
       setTimeout(() => {
         state.sdk.actions.composeCast({ text: shareText });
       }, 2000);
@@ -824,6 +828,10 @@ els.btnMint.addEventListener('click', async (e) => {
 
     await ensureBaseMainnet(provider);
 
+    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+    const mintReadContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, publicProvider);
+    const nextSeriesNumber = Number(await mintReadContract.totalMinted()) + 1;
+
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     const userAddress = accounts[0];
@@ -836,7 +844,7 @@ els.btnMint.addEventListener('click', async (e) => {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         imageBase64: state.mutantUrl,
-        name: `Zombie Mutant #${Date.now()}`,
+        name: `Zombie Mutant #${nextSeriesNumber}`,
         description: `Zombie mutant NFT generated from @${state.context?.user?.username || 'user'}'s profile.`,
       }),
     });
@@ -853,8 +861,8 @@ els.btnMint.addEventListener('click', async (e) => {
     // 4. Prepare mint transaction without relying on estimateGas
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
-    const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
-    const mintTx = await readContract.getFunction('mint').populateTransaction(
+    const mintTxContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
+    const mintTx = await mintTxContract.getFunction('mint').populateTransaction(
       userAddress,
       ipfsData.tokenUri,
       { value: ethers.parseEther(MINT_PRICE) }
@@ -865,26 +873,25 @@ els.btnMint.addEventListener('click', async (e) => {
     const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
-    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
     const receipt = await publicProvider.waitForTransaction(tx.hash);
     if (!receipt) throw new Error('Transaction was sent but receipt was not found yet. Please check Basescan.');
 
     // 5. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
       try {
-        const parsed = readContract.interface.parseLog(log);
+        const parsed = mintTxContract.interface.parseLog(log);
         return parsed?.name === 'NFTMinted';
       } catch { return false; }
     });
 
-    let tokenId = '?';
+    let tokenNumber = '?';
     if (mintEvent) {
-      const parsed = contract.interface.parseLog(mintEvent);
-      tokenId = parsed.args.tokenId.toString();
+      const parsed = mintTxContract.interface.parseLog(mintEvent);
+      tokenNumber = (Number(parsed.args.tokenId) + 1).toString();
     }
 
     setStep(4);
-    setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
+    setStatus(`NFT Minted! Token #${tokenNumber} 🧟🎉`, 'success');
     spawnConfetti();
     screenShake();
     if (ipfsData.imageGateway) els.imgMutant.src = ipfsData.imageGateway;

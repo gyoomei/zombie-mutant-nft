@@ -12,10 +12,11 @@ export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' });
 
   try {
-    const { imageBase64, name, description } = req.body;
+    const { imageBase64, name, description, seriesNumber } = req.body;
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
 
     const pinataJwt = process.env.PINATA_JWT;
+    const seriesLabel = seriesNumber ? `#${seriesNumber}` : '';
     
     // Try nft.storage as fallback if no Pinata JWT
     if (!pinataJwt || pinataJwt.length < 50) {
@@ -28,7 +29,7 @@ export default async function handler(req, res) {
         
         const imageForm = new FormData();
         imageForm.append('file', new Blob([imageBuffer], { type: 'image/jpeg' }), 'zombie.jpg');
-        imageForm.append('name', name || 'Zombie Mutant NFT');
+        imageForm.append('name', `${name || 'Zombie Mutant NFT'}${seriesLabel ? ` ${seriesLabel}` : ''}`.trim());
         imageForm.append('description', description || 'AI-generated zombie mutant NFT');
         
         const uploadResp = await fetch('https://api.nft.storage/upload', {
@@ -45,7 +46,7 @@ export default async function handler(req, res) {
           
           // Upload metadata
           const metadata = {
-            name: name || 'Zombie Mutant NFT',
+            name: `${name || 'Zombie Mutant NFT'}${seriesLabel ? ` ${seriesLabel}` : ''}`.trim(),
             description: description || 'AI-generated zombie mutant NFT',
             image: imageGateway,
             attributes: [
@@ -110,9 +111,9 @@ export default async function handler(req, res) {
 
     // ─── Step 2: Upload metadata JSON to IPFS ───
     const metadata = {
-      name: name || 'Zombie Mutant NFT',
+      name: `${name || 'Zombie Mutant NFT'}${seriesLabel ? ` ${seriesLabel}` : ''}`.trim(),
       description: description || 'AI-generated zombie mutant NFT from profile picture.',
-            image: `https://gateway.pinata.cloud/ipfs/${imageIpfsHash}`,
+      image: `https://gateway.pinata.cloud/ipfs/${imageIpfsHash}`,
       attributes: [
         { trait_type: 'Generation', value: 'AI' },
         { trait_type: 'Style', value: '2D Cartoon Zombie' },
