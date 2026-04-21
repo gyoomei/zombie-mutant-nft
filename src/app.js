@@ -90,33 +90,33 @@ async function fetchContext(sdk) {
   }
 }
 
-// ─── Generate Mutant (img2img — transform pfp asli) ──────
+// ─── Generate Mutant (preserve original + zombie effect) ──
 async function generateMutant(pfpUrl, username, displayName) {
-  const name = displayName || username || 'character';
-
-  // Primary: img2img transformation (zombie effect ON the actual pfp)
-  if (pfpUrl) {
-    try {
-      const response = await fetch('/api/zombify', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pfpUrl }),
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success && data.imageUrl) {
-          return data.imageUrl;
-        }
-      }
-      console.warn('img2img failed, falling back to text-to-image');
-    } catch (e) {
-      console.warn('img2img error:', e.message);
-    }
+  if (!pfpUrl) {
+    // No pfp, use fallback text-to-image
+    return { original: null, zombie: await generateMutantFallback(displayName || username) };
   }
 
-  // Fallback: text-to-image (less accurate)
-  return generateMutantFallback(name);
+  try {
+    const response = await fetch('/api/zombify', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ pfpUrl }),
+    });
+
+    if (response.ok) {
+      const data = await response.json();
+      if (data.success) {
+        return { original: data.original, zombie: data.zombie };
+      }
+    }
+    console.warn('zombify failed, using fallback');
+  } catch (e) {
+    console.warn('zombify error:', e.message);
+  }
+
+  // Fallback
+  return { original: pfpUrl, zombie: await generateMutantFallback(displayName || username) };
 }
 
 // ─── Fallback (simple prompt, no vision) ─────────────────
@@ -227,16 +227,20 @@ els.btnGenerate.addEventListener('click', async () => {
   setStatus('Analyzing your profile picture with AI vision...');
 
   try {
-    const mutantUrl = await generateMutant(
+    const result = await generateMutant(
       state.context?.user?.pfpUrl || '',
       username,
       displayName
     );
-    state.mutantUrl = mutantUrl;
+    state.mutantUrl = result.zombie;
 
     // Show result
     hideLoading();
-    els.imgMutant.src = mutantUrl;
+    // Show original pfp if available
+    if (result.original) {
+      els.imgOriginal.src = result.original;
+    }
+    els.imgMutant.src = result.zombie;
     els.previewImages.style.display = 'flex';
 
     // Show action buttons
