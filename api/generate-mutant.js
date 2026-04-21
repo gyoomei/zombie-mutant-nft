@@ -36,7 +36,7 @@ export default async function handler(req, res) {
             model: 'grok-4-fast-non-reasoning',
             messages: [{ role: 'user', content: [
               { type: 'image_url', image_url: { url: pfpUrl } },
-              { type: 'text', text: 'In 2 sentences: art style, colors, facial features. Be concise.' }
+              { type: 'text', text: 'Describe this character in detail: species/gender, hair/fur color, face features, skin/fur, clothing, expression, art style, background color. Be specific about every visual element so an artist could recreate it.' }
             ]}]
           })
         });
@@ -44,10 +44,26 @@ export default async function handler(req, res) {
       } catch (e) { console.warn('Vision:', e.message); }
     }
 
-    // Step 2: Generate
+    // Step 2: Random accessories (pick 3)
+    const accessories = [
+      { item: "burning cigarette hanging from mouth corner with toxic green smoke trail rising up", pos: "in mouth" },
+      { item: "rusty battle axe strapped to back, blade dripping blood", pos: "on back" },
+      { item: "broken sword with glowing green runes resting on shoulder like a samurai", pos: "on shoulder" },
+      { item: "rusty chain with skull pendant draped over shoulder", pos: "on shoulder" },
+      { item: "machete tucked in waist belt, dripping zombie blood", pos: "on waist" },
+      { item: "spiked mace hanging from back, covered in green slime", pos: "on back" },
+      { item: "barbed wire wrapped around arm, cutting into skin", pos: "on arm" },
+      { item: "biohazard symbol glowing on chest", pos: "on chest" },
+    ];
+    // Shuffle and pick 3
+    const shuffled = accessories.sort(() => Math.random() - 0.5);
+    const picked = shuffled.slice(0, 3);
+    const accLines = picked.map(a => `- ${a.item} (${a.pos})`).join('\n');
+
+    // Step 3: Generate with positioned accessories
     const prompt = desc
-      ? `Zombie mutant: "${desc.substring(0,200)}". Green decayed skin, red glowing eyes, dark sockets, rot, blood. Keep EXACT 2D flat cartoon style. NOT photorealistic. Bold outlines. Dark horror bg. NFT art.`
-      : `2D cartoon zombie "${name}". Green skin, red eyes, dark sockets. Flat cartoon, NOT realistic. Bold outlines. Dark bg.`;
+      ? `ZOMBIE MUTANT NFT CHARACTER:\nKeep EXACT same character: ${desc.substring(0,300)}.\nZOMBIFY: green decayed patches on skin/fur, GLOWING RED eyes with dark hollow sockets, cracked skin showing sharp zombie teeth, torn ears, green slime dripping from mouth.\n\nEXACT ACCESSORY PLACEMENT:\n${accLines}\n\nEach accessory must be at its specific position. Show them clearly.\nSame hand-drawn 2D cartoon style, bold black outlines. NOT photorealistic.\nDark background with green zombie fog at bottom.\nNFT collectible art, square composition.`
+      : `ZOMBIE MUTANT NFT CHARACTER: "${name}".\nZOMBIFY: green decayed skin, GLOWING RED eyes with dark hollow sockets, sharp zombie teeth, torn ears, green slime.\n\nEXACT ACCESSORY PLACEMENT:\n${accLines}\n\nSame 2D cartoon style, bold outlines. NOT photorealistic.\nDark background with green fog. NFT collectible art.`;
 
     const gr = await fetch('https://api.x.ai/v1/images/generations', {
       method: 'POST',
@@ -60,7 +76,7 @@ export default async function handler(req, res) {
     const imgUrl = gd.data?.[0]?.url;
     if (!imgUrl) throw new Error('No image');
 
-    // Step 3: Download and return base64 (Vercel IP can access xAI CDN)
+    // Step 4: Download and return base64
     const imgResp = await fetch(imgUrl);
     if (!imgResp.ok) throw new Error('Download failed');
     const buf = Buffer.from(await imgResp.arrayBuffer());
@@ -70,6 +86,7 @@ export default async function handler(req, res) {
       success: true,
       imageUrl: b64,
       method: 'grok-vision+imagine',
+      accessories: picked.map(a => a.item),
       remaining: MAX_GENERATIONS - globalCount,
     });
   } catch (e) {
