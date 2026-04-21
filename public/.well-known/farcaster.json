@@ -1,6 +1,6 @@
 {
   "accountAssociation": {
-    "header": "eyJmaWQiOjI0MTQ3MCwidHlwZSI6ImF1dGciLCJrZXkiOiIweDkyQzgyNTIwOTA3YjZDZmU2MUUzNjNmZTBFOWY2QjdjODJmQzdENTkifQ",
+    "header": "eyJmaWQiOjI0MTQ3MCwidHlwZSI6ImF1dGgiLCJrZXkiOiIweDkyQzgyNTIwOTA3YjZDZmU2MUUzNjNmZTBFOWY2QjdjODJmQzdENTkifQ",
     "payload": "eyJkb21haW4iOiJ6b21iaWUtbXV0YW50LW5mdC52ZXJjZWwuYXBwIn0",
     "signature": "/0TmdKnM2dsfwN1z4LFzMvjVTg/d7Vm78yXnnvNXsZo/d4cgD6qIsbmsuJUQdueIFwgsdj3ChsokaagSl2jYkhs="
   },
@@ -10,12 +10,8 @@
     "iconUrl": "https://zombie-mutant-nft.vercel.app/icon.png",
     "homeUrl": "https://zombie-mutant-nft.vercel.app",
     "imageUrl": "https://zombie-mutant-nft.vercel.app/hero.png",
-    "buttonTitle": "Become a Mutant 🧟",
+    "buttonTitle": "Become a Mutant",
     "splashImageUrl": "https://zombie-mutant-nft.vercel.app/icon.png",
-    "splashBackgroundColor": "#0a0a0a",
-    "subtitle": "AI-powered zombie mutations",
-    "description": "Turn your Farcaster pfp into a zombie mutant NFT. AI-powered horror art on Base.",
-    "primaryCategory": "art-creativity",
-    "tags": ["nft", "ai", "art", "zombie", "horror"]
+    "splashBackgroundColor": "#0a0a0a"
   }
 }
