@@ -551,10 +551,12 @@
       <!-- Preview -->
       <div class="glass-card">
         <div class="preview-area" id="preview-area">
+          <!-- Before login: show mystery box -->
           <div class="preview-placeholder" id="preview-placeholder">
-            <span class="emoji-big">🧟</span>
-            Open in Farcaster to load your profile picture
+            <img src="/mystery-box.jpg" alt="Mystery Box" style="width:120px;height:120px;border-radius:12px;margin-bottom:8px;" />
+            <span style="color:var(--text-muted);font-size:0.8rem;">Open in Farcaster to unlock</span>
           </div>
+          <!-- After login: show original → mutant -->
           <div class="preview-images" id="preview-images" style="display:none">
             <div class="img-box">
               <img id="img-original" src="" alt="Original" />
@@ -562,13 +564,14 @@
             </div>
             <div class="arrow-divider">→</div>
             <div class="img-box mutant">
-              <img id="img-mutant" src="" alt="Mutant" />
+              <img id="img-mutant" src="/mystery-box.jpg" alt="Mutant" />
               <div class="label">Mutant 🧟</div>
             </div>
           </div>
+          <!-- Loading state -->
           <div class="loading-overlay" id="loading">
             <div class="spinner-ring"></div>
-            <div class="loading-text" id="loading-text">Analyzing your pfp<span class="loading-dots"></span></div>
+            <div class="loading-text" id="loading-text">Transforming...<span class="loading-dots"></span></div>
           </div>
         </div>
       </div>
