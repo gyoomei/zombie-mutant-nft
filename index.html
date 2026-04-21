@@ -76,6 +76,47 @@
         margin-top: 4px;
       }
 
+      /* Gallery */
+      .gallery-section {
+        background: var(--card);
+        border: 1px solid var(--card-border);
+        border-radius: 16px;
+        padding: 14px;
+        overflow: hidden;
+      }
+      .gallery-label {
+        font-size: 0.8rem;
+        color: var(--text-dim);
+        margin-bottom: 10px;
+        font-weight: 600;
+      }
+      .gallery-scroll {
+        display: flex;
+        gap: 12px;
+        overflow-x: auto;
+        scroll-snap-type: x mandatory;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 4px;
+      }
+      .gallery-scroll::-webkit-scrollbar { display: none; }
+      .gallery-card {
+        flex: 0 0 auto;
+        width: 140px;
+        height: 140px;
+        border-radius: 12px;
+        overflow: hidden;
+        scroll-snap-align: start;
+        border: 2px solid var(--card-border);
+        transition: border-color 0.3s;
+      }
+      .gallery-card:hover { border-color: var(--green); }
+      .gallery-card img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+
       /* User Card */
       .user-card {
         background: var(--card);
@@ -282,6 +323,16 @@
         <div class="step" id="step-2"></div>
         <div class="step" id="step-3"></div>
         <div class="step" id="step-4"></div>
+      </div>
+
+      <!-- Preview Gallery -->
+      <div class="gallery-section">
+        <div class="gallery-label">🧟 Mutant Previews</div>
+        <div class="gallery-scroll" id="gallery">
+          <div class="gallery-card"><img src="/preview1.jpg" alt="Mutant Ape" loading="lazy" /></div>
+          <div class="gallery-card"><img src="/preview2.jpg" alt="Mutant Cyborg" loading="lazy" /></div>
+          <div class="gallery-card"><img src="/preview3.jpg" alt="Mutant Wolf" loading="lazy" /></div>
+        </div>
       </div>
 
       <!-- User Card -->
