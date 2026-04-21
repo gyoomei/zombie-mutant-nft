@@ -233,13 +233,33 @@
         position: relative;
         z-index: 1;
       }
+      .gallery-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 10px;
+      }
       .gallery-label {
         font-size: 0.72rem;
         color: var(--text-muted);
-        margin-bottom: 10px;
         font-weight: 600;
         text-transform: uppercase;
         letter-spacing: 0.08em;
+      }
+      .gallery-label span {
+        color: var(--green);
+      }
+      .gallery-scroll-speed {
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        font-size: 0.65rem;
+        color: var(--text-muted);
+      }
+      .gallery-scroll-speed svg {
+        width: 12px;
+        height: 12px;
+        animation: swipeHint 2s ease-in-out infinite;
       }
       .gallery-scroll {
         display: flex;
@@ -252,7 +272,7 @@
       .gallery-track {
         display: flex;
         gap: 10px;
-        animation: scrollLoop 20s linear infinite;
+        animation: scrollLoop 12s linear infinite;
         will-change: transform;
       }
       .gallery-track:hover {
@@ -268,31 +288,71 @@
         height: 130px;
         border-radius: var(--radius-sm);
         overflow: hidden;
-        border: 1px solid var(--card-border);
+        border: 1px solid rgba(34, 197, 94, 0.15);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
+      }
+      /* Animated glow border */
+      .gallery-card::before {
+        content: '';
+        position: absolute;
+        inset: -1px;
+        border-radius: calc(var(--radius-sm) + 1px);
+        background: linear-gradient(135deg, var(--green), var(--purple), var(--green));
+        background-size: 200% 200%;
+        animation: glowBorder 3s ease-in-out infinite;
+        z-index: -1;
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      @keyframes glowBorder {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      .gallery-card:hover::before { opacity: 1; }
+      .gallery-card:hover {
+        border-color: transparent;
+        transform: translateY(-3px) scale(1.02);
+        box-shadow: 0 12px 32px rgba(0,0,0,0.5), 0 0 20px rgba(34,197,94,0.15);
       }
       .gallery-card::after {
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6));
+        background: linear-gradient(180deg, transparent 50%, rgba(0,0,0,0.7));
         opacity: 0;
         transition: opacity 0.3s;
       }
-      .gallery-card:hover {
-        border-color: var(--green);
-        transform: translateY(-2px);
-        box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--green-dim);
-      }
       .gallery-card:hover::after { opacity: 1; }
+      /* Badge on card */
+      .gallery-card .card-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        background: rgba(0,0,0,0.7);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(34,197,94,0.3);
+        border-radius: 6px;
+        padding: 2px 6px;
+        font-size: 0.6rem;
+        font-weight: 700;
+        color: var(--green);
+        opacity: 0;
+        transform: translateY(-4px);
+        transition: all 0.3s;
+        z-index: 2;
+      }
+      .gallery-card:hover .card-badge {
+        opacity: 1;
+        transform: translateY(0);
+      }
       .gallery-card img {
         width: 100%;
         height: 100%;
         object-fit: cover;
         transition: transform 0.5s;
       }
-      .gallery-card:hover img { transform: scale(1.05); }
+      .gallery-card:hover img { transform: scale(1.08); }
 
       /* ─── User Card ─── */
       .user-card {
@@ -820,22 +880,25 @@
 
       <!-- Gallery -->
       <div class="gallery-section glass-card">
-        <div class="gallery-label">Mutant Previews</div>
-        <div class="gallery-scroll" id="gallery">
-          <div class="gallery-track" id="gallery-track">
-            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /></div>
-            <!-- Duplicate for seamless loop -->
-            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /></div>
-            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /></div>
+        <div class="gallery-header">
+          <div class="gallery-label">Mutant Gallery <span>· 4K+ Created</span></div>
+          <div class="gallery-scroll-speed">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            <span>Auto</span>
           </div>
         </div>
-        <div class="scroll-hint">
-          <span>⚡ Auto-scrolling preview</span>
+        <div class="gallery-scroll" id="gallery">
+          <div class="gallery-track" id="gallery-track">
+            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /><div class="card-badge">⚔️ 2K+</div></div>
+            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /><div class="card-badge">🪓 1K+</div></div>
+            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /><div class="card-badge">💀 800+</div></div>
+            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /><div class="card-badge">🧬 600+</div></div>
+            <!-- Duplicate for seamless loop -->
+            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /><div class="card-badge">⚔️ 2K+</div></div>
+            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /><div class="card-badge">🪓 1K+</div></div>
+            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /><div class="card-badge">💀 800+</div></div>
+            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /><div class="card-badge">🧬 600+</div></div>
+          </div>
         </div>
       </div>
 
