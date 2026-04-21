@@ -28,6 +28,36 @@ const state = {
   step: 1,
 };
 
+// ─── Ripple Effect ─────────────────────────────────────────
+function addRipple(btn, event) {
+  if (!btn) return;
+  const ripple = document.createElement('span');
+  ripple.className = 'ripple';
+  const rect = btn.getBoundingClientRect();
+  const size = Math.max(rect.width, rect.height);
+  ripple.style.width = ripple.style.height = size + 'px';
+  ripple.style.left = (event?.clientX - rect.left - size/2) + 'px';
+  ripple.style.top = (event?.clientY - rect.top - size/2) + 'px';
+  btn.appendChild(ripple);
+  setTimeout(() => ripple.remove(), 600);
+}
+
+// ─── Button Loading State ──────────────────────────────────
+function setBtnLoading(btn, loading = true) {
+  if (!btn) return;
+  if (loading) {
+    btn.classList.add('loading');
+    btn.disabled = true;
+  } else {
+    btn.classList.remove('loading');
+  }
+}
+
+// ─── Screen Shake ─────────────────────────────────────────
+function screenShake() {
+  document.querySelector('.app').classList.add('shake');
+  setTimeout(() => document.querySelector('.app').classList.remove('shake'), 500);
+}
 
 // ─── Confetti Effect ──────────────────────────────────────
 function spawnConfetti() {
@@ -48,12 +78,6 @@ function spawnConfetti() {
     document.body.appendChild(piece);
     setTimeout(() => piece.remove(), 4000);
   }
-}
-
-// ─── Screen Shake ─────────────────────────────────────────
-function screenShake() {
-  document.querySelector('.app').classList.add('shake');
-  setTimeout(() => document.querySelector('.app').classList.remove('shake'), 500);
 }
 
 
@@ -402,11 +426,12 @@ async function init() {
 }
 
 // ─── Event Listeners ──────────────────────────────────────
-els.btnGenerate.addEventListener('click', async () => {
+els.btnGenerate.addEventListener('click', async (e) => {
+  addRipple(els.btnGenerate, e);
+  setBtnLoading(els.btnGenerate, true);
   const username = state.context?.user?.username || '';
   const displayName = state.context?.user?.displayName || '';
 
-  els.btnGenerate.disabled = true;
   setStep(3);
   
   // Show step indicator + loading box
@@ -450,9 +475,9 @@ els.btnGenerate.addEventListener('click', async () => {
     hideLoading();
     const indicator = $('#step-indicator');
     if (indicator) indicator.classList.remove('active');
+    setBtnLoading(els.btnGenerate, false); // Re-enable button
     els.previewPlaceholder.style.display = 'block';
     els.previewPlaceholder.textContent = `❌ Error: ${e.message}`;
-    els.btnGenerate.disabled = false;
     setStep(2);
     setStatus(`Failed: ${e.message}`, 'error');
   }
@@ -566,9 +591,107 @@ async function mintNFT() {
   }
 }
 
-els.btnMint.addEventListener('click', mintNFT);
+els.btnMint.addEventListener('click', async (e) => {
+  addRipple(els.btnMint, e);
+  setBtnLoading(els.btnMint, true);
 
-els.btnShare.addEventListener('click', async () => {
+  if (!state.mutantUrl) {
+    setStatus('Generate a mutant first!', 'error');
+    setBtnLoading(els.btnMint, false);
+    return;
+  }
+
+  // Contract address (deployed on Base)
+  const CONTRACT_ADDRESS = '0x80A10b9Ce904Ba7BC7bc8478698DC2E759E0AD39';
+  const CONTRACT_ABI = [
+    "function mint(address to, string uri) payable returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function mintPrice() view returns (uint256)",
+  ];
+  const MINT_PRICE = '0.001'; // ETH
+
+  setStatus('Connecting wallet...');
+  setStep(3);
+
+  try {
+    // 1. Get provider from Farcaster SDK
+    let provider;
+    if (state.sdk?.wallet?.getEthereumProvider) {
+      provider = await state.sdk.wallet.getEthereumProvider();
+    } else if (window.ethereum) {
+      provider = window.ethereum;
+    } else {
+      throw new Error('No wallet found. Open in Farcaster or use a wallet browser.');
+    }
+
+    // 2. Request accounts
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const userAddress = accounts[0];
+    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
+
+    // 3. Upload image to IPFS
+    setStatus('Uploading to IPFS...');
+    const ipfsResp = await fetch('/api/upload-ipfs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: state.mutantUrl,
+        name: `Zombie Mutant #${Date.now()}`,
+        description: `Zombie mutant NFT generated from @${state.context?.user?.username || 'user'}'s profile.`,
+      }),
+    });
+
+    if (!ipfsResp.ok) {
+      const err = await ipfsResp.json();
+      throw new Error(err.error || 'IPFS upload failed');
+    }
+
+    const ipfsData = await ipfsResp.json();
+    setStatus('Minting NFT on Base...');
+
+    // 4. Send mint transaction
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const signer = await ethersProvider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    const tx = await contract.mint(userAddress, ipfsData.tokenUri, {
+      value: ethers.parseEther(MINT_PRICE),
+    });
+
+    setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
+    const receipt = await tx.wait();
+
+    // 5. Get token ID from event
+    const mintEvent = receipt.logs.find(log => {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        return parsed?.name === 'NFTMinted';
+      } catch { return false; }
+    });
+
+    let tokenId = '?';
+    if (mintEvent) {
+      const parsed = contract.interface.parseLog(mintEvent);
+      tokenId = parsed.args.tokenId.toString();
+    }
+
+    setStep(4);
+    setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
+    spawnConfetti();
+    screenShake();
+    setBtnLoading(els.btnMint, false);
+    els.btnMint.disabled = true;
+    els.btnMint.querySelector('.btn-text').textContent = 'Minted!';
+  } catch (e) {
+    console.error('Mint error:', e);
+    setBtnLoading(els.btnMint, false);
+    setStep(2);
+    setStatus(`Mint failed: ${e.message}`, 'error');
+  }
+});
+
+els.btnShare.addEventListener('click', async (e) => {
+  addRipple(els.btnShare, e);
   await shareOnFarcaster();
 });
 
