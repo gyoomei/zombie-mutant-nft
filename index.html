@@ -556,11 +556,11 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 14px;
-        min-height: 258px;
+        gap: 16px;
+        min-height: 292px;
         justify-content: center;
         position: relative;
-        padding: 4px 0;
+        padding: 8px 0 4px;
       }
       .preview-placeholder {
         color: var(--text-muted);
@@ -632,76 +632,110 @@
         align-items: center;
         justify-content: center;
         width: 100%;
-        animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+        animation: fadeIn 0.55s cubic-bezier(0.4, 0, 0.2, 1);
       }
       @keyframes fadeIn {
-        from { opacity: 0; transform: scale(0.95); }
-        to { opacity: 1; transform: scale(1); }
+        from { opacity: 0; transform: translateY(10px) scale(0.97); }
+        to { opacity: 1; transform: translateY(0) scale(1); }
       }
-      .img-box {
+      .compare-card {
         flex: 1;
-        text-align: center;
-        max-width: 155px;
+        max-width: 182px;
         position: relative;
+        padding: 12px;
+        border-radius: 24px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.08);
+        box-shadow: 0 18px 42px rgba(0,0,0,0.34);
+        isolation: isolate;
       }
-      .img-box img {
+      .compare-card::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        opacity: 0.8;
+        pointer-events: none;
+      }
+      .compare-card.original::before {
+        background: radial-gradient(circle at 25% 20%, rgba(244,114,182,0.18), transparent 40%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+      }
+      .compare-card.mutant::before {
+        background: radial-gradient(circle at 50% 20%, rgba(34,197,94,0.20), transparent 44%), linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0));
+      }
+      .compare-card.original {
+        background: linear-gradient(180deg, rgba(18, 24, 39, 0.92), rgba(12, 16, 28, 0.92));
+      }
+      .compare-card.mutant {
+        background: linear-gradient(180deg, rgba(12, 20, 16, 0.96), rgba(10, 15, 12, 0.96));
+      }
+      .card-tag {
+        position: relative;
+        z-index: 2;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 10px;
+        padding: 8px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: var(--text-muted);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .compare-card.original .card-tag { color: #d6d5ff; }
+      .compare-card.mutant .card-tag { color: var(--green); }
+      .card-media {
+        position: relative;
+        z-index: 1;
+        border-radius: 18px;
+        overflow: hidden;
+      }
+      .compare-card img {
         width: 100%;
         aspect-ratio: 1;
         object-fit: cover;
-        border-radius: var(--radius-sm);
+        display: block;
+        border-radius: 18px;
         border: 1px solid rgba(255,255,255,0.08);
         background: rgba(255,255,255,0.02);
         box-shadow: 0 14px 36px rgba(0,0,0,0.35);
-        transition: all 0.3s;
+        transition: transform 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease;
       }
-      .img-box.mutant {
-        position: relative;
+      .compare-card.original img {
+        border-color: rgba(244,114,182,0.16);
       }
-      /* Glow border on mutant box */
-      .img-box.mutant::before {
-        content: '';
-        position: absolute;
-        inset: -3px;
-        border-radius: calc(var(--radius-sm) + 3px);
-        background: linear-gradient(135deg, var(--green), var(--purple), var(--green));
-        background-size: 200% 200%;
-        animation: glowBorder 3s ease-in-out infinite;
-        z-index: -1;
-        opacity: 0.7;
+      .compare-card.mutant img {
+        border-color: rgba(34,197,94,0.34);
+        box-shadow: 0 0 18px var(--green-glow), 0 14px 36px rgba(0,0,0,0.38);
       }
-      .img-box.mutant img {
-        border-color: var(--green);
-        box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3);
-        animation: mutantPulse 2s ease-in-out infinite;
+      .compare-card:hover img {
+        transform: translateY(-1px) scale(1.01);
       }
-      @keyframes mutantPulse {
-        0%, 100% { box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3); }
-        50% { box-shadow: 0 0 35px var(--green-glow), 0 0 60px rgba(34,197,94,0.2), 0 8px 32px rgba(0,0,0,0.3); }
-      }
-      .img-box .label {
-        font-size: 0.7rem;
+      .compare-card .label {
+        margin-top: 10px;
+        font-size: 0.68rem;
         color: var(--text-muted);
-        margin-top: 8px;
-        font-weight: 500;
+        font-weight: 700;
         text-transform: uppercase;
-        letter-spacing: 0.05em;
+        letter-spacing: 0.18em;
       }
-      .img-box.mutant .label {
-        color: var(--green);
-      }
-      /* UNIQUE MUTANT badge */
+      .compare-card.mutant .label { color: var(--green); }
       .unique-badge {
         position: absolute;
-        top: -8px;
-        left: 50%;
-        transform: translateX(-50%);
-        background: linear-gradient(135deg, rgba(34,197,94,0.95), rgba(56,189,248,0.95), rgba(168,85,247,0.95));
+        top: 12px;
+        right: 12px;
+        left: auto;
+        transform: none;
+        background: linear-gradient(135deg, rgba(34,197,94,0.95), rgba(56,189,248,0.92), rgba(168,85,247,0.92));
         color: #020617;
-        font-size: 0.55rem;
+        font-size: 0.54rem;
         font-weight: 900;
         text-transform: uppercase;
         letter-spacing: 0.08em;
-        padding: 4px 10px;
+        padding: 5px 9px;
         border-radius: 999px;
         white-space: nowrap;
         box-shadow: 0 0 18px rgba(34,197,94,0.18);
@@ -709,49 +743,49 @@
         z-index: 5;
       }
       @keyframes badgePop {
-        0% { opacity: 0; transform: translateX(-50%) scale(0) translateY(10px); }
-        70% { transform: translateX(-50%) scale(1.1) translateY(-2px); }
-        100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+        0% { opacity: 0; transform: scale(0.7) translateY(8px); }
+        100% { opacity: 1; transform: scale(1) translateY(0); }
       }
 
-      /* Arrow divider - animated lightning bolt */
+      /* Divider */
       .arrow-divider {
-        font-size: 1.4rem;
+        width: 48px;
+        height: 48px;
+        border-radius: 999px;
         flex-shrink: 0;
+        display: grid;
+        place-items: center;
         color: var(--green);
+        background: linear-gradient(180deg, rgba(12, 18, 15, 0.94), rgba(8, 12, 10, 0.92));
+        border: 1px solid rgba(66,255,154,0.18);
+        box-shadow: 0 0 0 1px rgba(255,255,255,0.03) inset, 0 0 24px rgba(34,197,94,0.20);
         text-shadow: 0 0 10px var(--green-glow);
-        animation: arrowPulse 1.5s ease-in-out infinite;
+        animation: arrowPulse 1.6s ease-in-out infinite;
         position: relative;
       }
-      @keyframes arrowPulse {
-        0%, 100% { opacity: 0.5; transform: translateX(0) scale(1); }
-        50% { opacity: 1; transform: translateX(5px) scale(1.1); }
-      }
-      /* Lightning sparks */
       .arrow-divider::before,
       .arrow-divider::after {
-        content: '✦';
+        content: '';
         position: absolute;
-        font-size: 0.5rem;
-        color: var(--purple);
-        opacity: 0;
-        animation: sparkFly 2s ease-out infinite;
+        width: 10px;
+        height: 2px;
+        border-radius: 999px;
+        background: rgba(168,85,247,0.8);
+        top: 50%;
+        transform: translateY(-50%);
+        animation: sparkPulse 1.8s ease-in-out infinite;
       }
-      .arrow-divider::before {
-        top: -4px;
-        left: -8px;
+      .arrow-divider::before { left: -10px; }
+      .arrow-divider::after { right: -10px; animation-delay: 0.4s; }
+      @keyframes arrowPulse {
+        0%, 100% { opacity: 0.65; transform: scale(1); }
+        50% { opacity: 1; transform: scale(1.06); }
       }
-      .arrow-divider::after {
-        bottom: -4px;
-        right: -8px;
-        animation-delay: 1s;
-      }
-      @keyframes sparkFly {
-        0% { opacity: 1; transform: scale(1); }
-        100% { opacity: 0; transform: scale(0) translateY(-8px); }
+      @keyframes sparkPulse {
+        0%, 100% { opacity: 0.18; transform: translateY(-50%) scaleX(0.8); }
+        50% { opacity: 1; transform: translateY(-50%) scaleX(1.25); }
       }
 
-      /* Step Indicator during processing */
       .step-indicator {
         display: none;
         flex-direction: column;
@@ -1210,17 +1244,6 @@
         100% { opacity: 0; transform: translateY(100vh) rotate(720deg) scale(0); }
       }
 
-      /* ─── Neon Pulse on Mutant ─── */
-      .img-box.mutant img {
-        border-color: var(--green);
-        box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3);
-        animation: mutantPulse 2s ease-in-out infinite;
-      }
-      @keyframes mutantPulse {
-        0%, 100% { box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3); }
-        50% { box-shadow: 0 0 35px var(--green-glow), 0 0 60px rgba(34,197,94,0.2), 0 8px 32px rgba(0,0,0,0.3); }
-      }
-
       /* ─── Generate Button Glow ─── */
       .btn-primary {
         animation: btnGlow 2s ease-in-out infinite;
@@ -1428,15 +1451,21 @@
           </div>
           <!-- After login: show original → mystery box / mutant -->
           <div class="preview-images" id="preview-images" style="display:none">
-            <div class="img-box">
-              <img id="img-original" src="" alt="Original" />
-              <div class="label">ORIGINAL</div>
+            <div class="compare-card original">
+              <div class="card-tag">Original</div>
+              <div class="card-media">
+                <img id="img-original" src="" alt="Original" />
+              </div>
+              <div class="label">Source</div>
             </div>
-            <div class="arrow-divider">⚡</div>
-            <div class="img-box mutant">
-              <div class="unique-badge" id="unique-badge" style="display:none">✦ UNIQUE MUTANT</div>
-              <img id="img-mutant" src="/mystery-box.jpg" alt="Mutant" />
-              <div class="label">MUTANT 🧟</div>
+            <div class="arrow-divider" aria-hidden="true"><span>⚡</span></div>
+            <div class="compare-card mutant">
+              <div class="unique-badge" id="unique-badge" style="display:none">Unique Mutant</div>
+              <div class="card-tag">Mutant</div>
+              <div class="card-media">
+                <img id="img-mutant" src="/mystery-box.jpg" alt="Mutant" />
+              </div>
+              <div class="label">Result</div>
             </div>
           </div>
           <!-- Step indicator during processing -->
