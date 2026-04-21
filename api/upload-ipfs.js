@@ -41,12 +41,13 @@ export default async function handler(req, res) {
           const uploadData = await uploadResp.json();
           const cid = uploadData.value.cid;
           const imageUri = `ipfs://${cid}`;
+          const imageGateway = `https://${cid}.ipfs.nftstorage.link`;
           
           // Upload metadata
           const metadata = {
             name: name || 'Zombie Mutant NFT',
             description: description || 'AI-generated zombie mutant NFT',
-            image: imageUri,
+            image: imageGateway,
             attributes: [
               { trait_type: 'Generation', value: 'AI' },
               { trait_type: 'Style', value: '2D Cartoon Zombie' },
@@ -70,9 +71,9 @@ export default async function handler(req, res) {
               success: true,
               imageUri,
               imageGateway: `https://${cid}.ipfs.nftstorage.link`,
-              tokenUri: `ipfs://${metaData.value.cid}`,
-              metadataGateway: `https://${metaData.value.cid}.ipfs.nftstorage.link`,
-              storage: 'nft.storage',
+          tokenUri: `ipfs://${metaData.value.cid}`,
+          metadataGateway: `https://${metaData.value.cid}.ipfs.nftstorage.link`,
+          storage: 'nft.storage',
             });
           }
         }
@@ -111,7 +112,7 @@ export default async function handler(req, res) {
     const metadata = {
       name: name || 'Zombie Mutant NFT',
       description: description || 'AI-generated zombie mutant NFT from profile picture.',
-      image: imageIpfsUri,
+            image: `https://gateway.pinata.cloud/ipfs/${imageIpfsHash}`,
       attributes: [
         { trait_type: 'Generation', value: 'AI' },
         { trait_type: 'Style', value: '2D Cartoon Zombie' },

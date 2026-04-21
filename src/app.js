@@ -27,6 +27,7 @@ const state = {
   context: null,
   pfpUrl: null,
   mutantUrl: null,
+  lastIpfs: null,
   step: 1,
 };
 
@@ -511,9 +512,10 @@ async function shareOnFarcaster() {
   const text = `I just turned myself into a Zombie Mutant! 🧟💀\n\nGenerated with AI from my Farcaster pfp.\n\n#ZombieMutantNFT #Farcaster`;
 
   try {
+    const nftPreview = state.lastIpfs?.imageGateway || state.lastIpfs?.metadataGateway || '';
     await state.sdk.actions.composeCast({
       text,
-      embeds: state.mutantUrl ? [state.mutantUrl] : [],
+      embeds: nftPreview ? [nftPreview] : [],
     });
   } catch (e) {
     // Fallback: clipboard + warpcast deep link
@@ -696,6 +698,7 @@ async function mintNFT() {
     }
 
     const ipfsData = await ipfsResp.json();
+    state.lastIpfs = ipfsData;
     setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
     // 4. Encode mint function call
@@ -729,6 +732,7 @@ async function mintNFT() {
     setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
     spawnConfetti();
     screenShake();
+    if (ipfsData.imageGateway) els.imgMutant.src = ipfsData.imageGateway;
 
     // Show mint result
     els.btnMint.textContent = 'Minted! ✅';
@@ -806,6 +810,7 @@ els.btnMint.addEventListener('click', async (e) => {
     }
 
     const ipfsData = await ipfsResp.json();
+    state.lastIpfs = ipfsData;
     setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
     // 4. Send mint transaction
@@ -838,6 +843,7 @@ els.btnMint.addEventListener('click', async (e) => {
     setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
     spawnConfetti();
     screenShake();
+    if (ipfsData.imageGateway) els.imgMutant.src = ipfsData.imageGateway;
     setBtnLoading(els.btnMint, false);
     els.btnMint.disabled = true;
     els.btnMint.querySelector('.btn-text').textContent = 'Minted!';
