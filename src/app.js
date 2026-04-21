@@ -945,6 +945,8 @@ els.btnMint.addEventListener('click', async (e) => {
     setBtnLoading(els.btnMint, false);
     els.btnMint.disabled = true;
     els.btnMint.querySelector('.btn-text').textContent = 'Minted!';
+    els.btnShare.style.display = 'block';
+    els.btnShare.querySelector('.btn-text').textContent = 'Share Mint';
   } catch (e) {
     console.error('Mint error:', e);
     setBtnLoading(els.btnMint, false);
