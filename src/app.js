@@ -90,30 +90,44 @@ async function fetchContext(sdk) {
   }
 }
 
-// ─── Generate Mutant (Pollinations.ai — free, no API key) ──
-async function generateMutant(username, displayName) {
+// ─── Generate Mutant (Vision API + Pollinations.ai) ──────
+async function generateMutant(pfpUrl, username, displayName) {
   const name = displayName || username || 'character';
+
+  // Call our serverless vision API
+  const response = await fetch('/api/analyze-pfp', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ pfpUrl, username, displayName }),
+  });
+
+  if (!response.ok) {
+    // Fallback: simple text-to-image if API fails
+    console.warn('Vision API failed, using fallback prompt');
+    return generateMutantFallback(name);
+  }
+
+  const data = await response.json();
+  return data.imageUrl;
+}
+
+// ─── Fallback (simple prompt, no vision) ─────────────────
+async function generateMutantFallback(name) {
   const prompt = encodeURIComponent(
     `zombie mutant portrait of ${name}, a Farcaster user, ` +
     `undead horror style, rotting flesh, exposed bones, glowing red eyes, ` +
     `dark green decaying skin, blood splatter, torn clothing, ` +
     `dark moody lighting, horror art, highly detailed, ` +
-    `cartoon style, circular portrait frame, dark background, ` +
-    `same composition as a profile picture avatar`
+    `cartoon style, circular portrait frame, dark background`
   );
-
   const url = `${POLLINATIONS_BASE}/${prompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
 
-  // Pollinations returns the image directly
-  // We just need to verify it loads
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
     img.onload = () => resolve(url);
     img.onerror = () => reject(new Error('Failed to generate image'));
     img.src = url;
-
-    // Timeout after 30s
     setTimeout(() => reject(new Error('Generation timed out')), 30000);
   });
 }
@@ -201,11 +215,15 @@ els.btnGenerate.addEventListener('click', async () => {
 
   els.btnGenerate.disabled = true;
   setStep(3);
-  showLoading('Summoning the undead...');
-  setStatus('Generating your zombie mutant...');
+  showLoading('Analyzing your pfp...');
+  setStatus('Analyzing your profile picture with AI vision...');
 
   try {
-    const mutantUrl = await generateMutant(username, displayName);
+    const mutantUrl = await generateMutant(
+      state.context?.user?.pfpUrl || '',
+      username,
+      displayName
+    );
     state.mutantUrl = mutantUrl;
 
     // Show result
