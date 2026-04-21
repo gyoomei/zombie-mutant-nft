@@ -16,11 +16,72 @@ export default async function handler(req, res) {
     if (!imageBase64) return res.status(400).json({ error: 'imageBase64 required' });
 
     const pinataJwt = process.env.PINATA_JWT;
-    if (!pinataJwt) {
-      return res.status(500).json({ error: 'PINATA_JWT not configured' });
+    
+    // Try nft.storage as fallback if no Pinata JWT
+    if (!pinataJwt || pinataJwt.length < 50) {
+      // Try nft.storage with free API key (works from serverless)
+      const nftStorageKey = process.env.NFTSTORAGE_KEY;
+      if (nftStorageKey && nftStorageKey.length > 50) {
+        // Upload via nft.storage
+        const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
+        const imageBuffer = Buffer.from(base64Data, 'base64');
+        
+        const imageForm = new FormData();
+        imageForm.append('file', new Blob([imageBuffer], { type: 'image/jpeg' }), 'zombie.jpg');
+        imageForm.append('name', name || 'Zombie Mutant NFT');
+        imageForm.append('description', description || 'AI-generated zombie mutant NFT');
+        
+        const uploadResp = await fetch('https://api.nft.storage/upload', {
+          method: 'POST',
+          headers: { 'Authorization': `Bearer ${nftStorageKey}` },
+          body: imageForm,
+        });
+        
+        if (uploadResp.ok) {
+          const uploadData = await uploadResp.json();
+          const cid = uploadData.value.cid;
+          const imageUri = `ipfs://${cid}`;
+          
+          // Upload metadata
+          const metadata = {
+            name: name || 'Zombie Mutant NFT',
+            description: description || 'AI-generated zombie mutant NFT',
+            image: imageUri,
+            attributes: [
+              { trait_type: 'Generation', value: 'AI' },
+              { trait_type: 'Style', value: '2D Cartoon Zombie' },
+              { trait_type: 'Chain', value: 'Base' },
+            ],
+          };
+          
+          const metaForm = new FormData();
+          metaForm.append('file', new Blob([JSON.stringify(metadata)], { type: 'application/json' }), 'metadata.json');
+          metaForm.append('name', name || 'Zombie Mutant NFT Metadata');
+          
+          const metaResp = await fetch('https://api.nft.storage/upload', {
+            method: 'POST',
+            headers: { 'Authorization': `Bearer ${nftStorageKey}` },
+            body: metaForm,
+          });
+          
+          if (metaResp.ok) {
+            const metaData = await metaResp.json();
+            return res.status(200).json({
+              success: true,
+              imageUri,
+              imageGateway: `https://${cid}.ipfs.nftstorage.link`,
+              tokenUri: `ipfs://${metaData.value.cid}`,
+              metadataGateway: `https://${metaData.value.cid}.ipfs.nftstorage.link`,
+              storage: 'nft.storage',
+            });
+          }
+        }
+      }
+      
+      return res.status(500).json({ error: 'No IPFS storage configured. Please contact the developer to set up PINATA_JWT or NFTSTORAGE_KEY environment variable.' });
     }
 
-    // ─── Step 1: Upload image to IPFS ───
+    // ─── Step 1: Upload image to IPFS via Pinata ───
     const base64Data = imageBase64.replace(/^data:image\/\w+;base64,/, '');
     const imageBuffer = Buffer.from(base64Data, 'base64');
 
@@ -49,7 +110,7 @@ export default async function handler(req, res) {
     // ─── Step 2: Upload metadata JSON to IPFS ───
     const metadata = {
       name: name || 'Zombie Mutant NFT',
-      description: description || 'AI-generated zombie mutant NFT from Farcaster profile picture.',
+      description: description || 'AI-generated zombie mutant NFT from profile picture.',
       image: imageIpfsUri,
       attributes: [
         { trait_type: 'Generation', value: 'AI' },
@@ -86,6 +147,7 @@ export default async function handler(req, res) {
       imageGateway: `https://gateway.pinata.cloud/ipfs/${imageIpfsHash}`,
       tokenUri,
       metadataGateway: `https://gateway.pinata.cloud/ipfs/${metadataIpfsHash}`,
+      storage: 'pinata',
     });
 
   } catch (error) {

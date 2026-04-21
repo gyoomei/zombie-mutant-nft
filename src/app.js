@@ -85,6 +85,7 @@ function spawnConfetti() {
 const $ = (sel) => document.querySelector(sel);
 const els = {
   userCard: $('#user-card'),
+  userCardSkeleton: $('#user-card-skeleton'),
   userAvatar: $('#user-avatar'),
   userName: $('#user-name'),
   userFid: $('#user-fid'),
@@ -99,9 +100,99 @@ const els = {
   btnShare: $('#btn-share'),
   status: $('#status'),
   statusText: $('#status-text'),
+  gallerySkeleton: $('#gallery-skeleton'),
+  gallery: $('#gallery'),
+  gallerySection: $('#gallery-section'),
+  socialProof: $('#social-proof'),
+  mutantCount: $('#mutant-count'),
 };
 
-// ─── Step indicator ───────────────────────────────────────
+// ─── Gallery Image Load ─────────────────────────────────────
+// Wait for gallery images to load, then swap skeleton → real gallery
+function initGallery() {
+  // Hide user card skeleton when gallery is ready (user card is shown separately)
+  if (els.userCardSkeleton) {
+    els.userCardSkeleton.style.display = 'none';
+  }
+  const galleryImgs = els.gallery?.querySelectorAll('img') || [];
+  let loaded = 0;
+  if (galleryImgs.length === 0) {
+    // No images, just hide skeleton
+    if (els.gallerySkeleton) els.gallerySkeleton.style.display = 'none';
+    if (els.gallery) els.gallery.style.display = '';
+    return;
+  }
+  galleryImgs.forEach((img) => {
+    if (img.complete) {
+      loaded++;
+      if (loaded >= galleryImgs.length) showGallery();
+    } else {
+      img.addEventListener('load', () => {
+        loaded++;
+        if (loaded >= galleryImgs.length) showGallery();
+      });
+      img.addEventListener('error', () => {
+        loaded++;
+        if (loaded >= galleryImgs.length) showGallery();
+      });
+    }
+  });
+}
+
+function showGallery() {
+  if (els.gallerySkeleton) {
+    els.gallerySkeleton.style.transition = 'opacity 0.4s';
+    els.gallerySkeleton.style.opacity = '0';
+    setTimeout(() => els.gallerySkeleton.style.display = 'none', 400);
+  }
+  if (els.gallery) {
+    els.gallery.style.display = '';
+    els.gallery.style.opacity = '0';
+    setTimeout(() => {
+      els.gallery.style.transition = 'opacity 0.4s';
+      els.gallery.style.opacity = '1';
+    }, 100);
+  }
+}
+
+// ─── Social Proof Counter ───────────────────────────────────
+async function fetchTotalMinted() {
+  const CONTRACT_ADDRESS = '0x80A10b9Ce904Ba7BC7bc8478698DC2E759E0AD39';
+  try {
+    let provider;
+    if (state.sdk?.wallet?.getEthereumProvider) {
+      provider = await state.sdk.wallet.getEthereumProvider();
+    } else if (window.ethereum) {
+      provider = window.ethereum;
+    } else {
+      return; // No wallet, skip
+    }
+    const browserProvider = new ethers.BrowserProvider(provider);
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, ['function totalMinted() view returns (uint256)'], browserProvider);
+    const total = await contract.totalMinted();
+    const count = Number(total);
+    if (count > 0) {
+      els.mutantCount.textContent = count.toLocaleString();
+      els.socialProof.style.display = '';
+      els.socialProof.style.animation = 'fadeIn 0.5s cubic-bezier(0.4,0,0.2,1)';
+    }
+  } catch (e) {
+    // Silently fail — counter is optional
+    console.warn('Could not fetch totalMinted:', e.message);
+  }
+}
+
+// ─── Demo mode: Gallery ready ───────────────────────────────
+function initDemo() {
+  initGallery();
+  els.userCardSkeleton.style.display = 'none';
+  els.userCard.style.display = 'flex';
+  els.userName.textContent = 'Demo User';
+  els.userFid.textContent = 'Demo Mode — not in Farcaster';
+  els.btnGenerate.disabled = false;
+  setStatus(`Demo mode — ${getRemaining()}/100 generations left`, 'info', '🎮');
+  els.previewPlaceholder.textContent = 'Click Generate to test zombie mutant generation 🧟';
+}
 function setStep(n) {
   state.step = n;
   for (let i = 1; i <= 4; i++) {
@@ -441,7 +532,8 @@ async function init() {
     setStatus('Open this in Farcaster to get started!', 'error');
     // Enable demo mode for testing outside Farcaster
     els.btnGenerate.disabled = false;
-    setStatus(`Demo mode — ${getRemaining()}/100 generations left`, 'info', '🎮');
+    initGallery();
+    initDemo(); // sets user card, status
 
     // Set demo user data for testing
     state.context = {
@@ -466,7 +558,9 @@ async function init() {
   const { fid, username, displayName, pfpUrl } = context.user;
   state.pfpUrl = pfpUrl;
 
-  // 3. Show user card
+  // 3. Show user card (hide skeleton, show real)
+  initGallery(); // show gallery when images load
+  fetchTotalMinted(); // fetch live counter
   if (pfpUrl) {
     els.userAvatar.src = pfpUrl;
     els.userName.textContent = displayName || username || `User ${fid}`;
