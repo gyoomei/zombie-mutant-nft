@@ -304,7 +304,7 @@ async function init() {
     setStatus('Open this in Farcaster to get started!', 'error');
     // Enable demo mode for testing outside Farcaster
     els.btnGenerate.disabled = false;
-    setStatus('Demo mode — click Generate to test the flow');
+    setStatus(`Demo mode — ${getRemaining()}/100 generations left`);
 
     // Set demo user data for testing
     state.context = {
@@ -345,7 +345,7 @@ async function init() {
     els.btnGenerate.disabled = false;
     setStep(2);
     const remaining = getRemaining();
-    setStatus(`Ready — tap Generate to become a mutant 🧟 (${remaining} generations left)`);
+    setStatus(`Ready — ${remaining}/100 generations left`);
   } else {
     setStatus('No profile picture found', 'error');
   }
@@ -385,7 +385,7 @@ els.btnGenerate.addEventListener('click', async () => {
 
     setStep(4);
     const remaining = getRemaining();
-    setStatus(`Mutant created! 🧟 ${remaining} generations left`, 'success');
+    setStatus(`Mutant created! 🧟 ${remaining}/100 left`, 'success');
   } catch (e) {
     hideLoading();
     els.previewPlaceholder.style.display = 'block';
