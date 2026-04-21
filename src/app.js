@@ -396,10 +396,113 @@ els.btnGenerate.addEventListener('click', async () => {
   }
 });
 
-els.btnMint.addEventListener('click', async () => {
-  setStatus('NFT minting coming soon! 🚧');
-  // TODO: Integrate Thirdweb / Crossmint for minting
-});
+// ─── NFT Minting ──────────────────────────────────────
+async function mintNFT() {
+  if (!state.mutantUrl) {
+    setStatus('Generate a mutant first!', 'error');
+    return;
+  }
+
+  // Contract address (deployed on Base)
+  const CONTRACT_ADDRESS = '0x0000000000000000000000000000000000000000'; // TODO: Replace after deployment
+  const CONTRACT_ABI = [
+    "function mint(address to, string uri) payable returns (uint256)",
+    "function totalMinted() view returns (uint256)",
+    "function mintPrice() view returns (uint256)",
+  ];
+  const MINT_PRICE = '0.001'; // ETH
+
+  els.btnMint.disabled = true;
+  setStatus('Connecting wallet...');
+  setStep(3);
+
+  try {
+    // 1. Get provider from Farcaster SDK
+    let provider;
+    if (state.sdk?.wallet?.getEthereumProvider) {
+      provider = await state.sdk.wallet.getEthereumProvider();
+    } else if (window.ethereum) {
+      provider = window.ethereum;
+    } else {
+      throw new Error('No wallet found. Open in Farcaster or use a wallet browser.');
+    }
+
+    // 2. Request accounts
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const userAddress = accounts[0];
+    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
+
+    // 3. Upload image to IPFS
+    setStatus('Uploading to IPFS...');
+    const ipfsResp = await fetch('/api/upload-ipfs', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        imageBase64: state.mutantUrl,
+        name: `Zombie Mutant #${Date.now()}`,
+        description: `Zombie mutant NFT generated from @${state.context?.user?.username || 'user'}'s Farcaster profile picture.`,
+      }),
+    });
+
+    if (!ipfsResp.ok) {
+      const err = await ipfsResp.json();
+      throw new Error(err.error || 'IPFS upload failed');
+    }
+
+    const ipfsData = await ipfsResp.json();
+    setStatus('Minting NFT on Base...');
+
+    // 4. Encode mint function call
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const signer = await ethersProvider.getSigner();
+    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+
+    // 5. Send mint transaction
+    const tx = await contract.mint(userAddress, ipfsData.tokenUri, {
+      value: ethers.parseEther(MINT_PRICE),
+    });
+
+    setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
+    const receipt = await tx.wait();
+
+    // 6. Get token ID from event
+    const mintEvent = receipt.logs.find(log => {
+      try {
+        const parsed = contract.interface.parseLog(log);
+        return parsed?.name === 'NFTMinted';
+      } catch { return false; }
+    });
+
+    let tokenId = '?';
+    if (mintEvent) {
+      const parsed = contract.interface.parseLog(mintEvent);
+      tokenId = parsed.args.tokenId.toString();
+    }
+
+    setStep(4);
+    setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
+
+    // Show mint result
+    els.btnMint.textContent = 'Minted! ✅';
+    els.btnMint.disabled = true;
+
+    // Share option
+    if (state.sdk?.actions?.composeCast) {
+      const shareText = `I just minted Zombie Mutant #${tokenId}! 🧟💀\n\nAI-generated zombie NFT from my Farcaster pfp on Base.\n\nhttps://basescan.org/tx/${tx.hash}\n\n#ZombieMutantNFT #Base #Farcaster`;
+      setTimeout(() => {
+        state.sdk.actions.composeCast({ text: shareText });
+      }, 2000);
+    }
+
+  } catch (e) {
+    console.error('Mint error:', e);
+    els.btnMint.disabled = false;
+    setStep(2);
+    setStatus(`Mint failed: ${e.message}`, 'error');
+  }
+}
+
+els.btnMint.addEventListener('click', mintNFT);
 
 els.btnShare.addEventListener('click', async () => {
   await shareOnFarcaster();
