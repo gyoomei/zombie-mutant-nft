@@ -1,13 +1,13 @@
 // /api/generate-mutant.js
 // Serverless Function — Generate zombie mutant pakai xAI Grok API
 // Limit: 100 generations
+// Returns base64 image (xAI URLs expire quickly)
 
 export const config = {
   maxDuration: 30,
 };
 
 // In-memory counter (resets on deploy, but serves as server-side check)
-// For production, use Vercel KV or similar
 let globalCount = 0;
 const MAX_GENERATIONS = 100;
 
@@ -72,14 +72,24 @@ export default async function handler(req, res) {
 
     const grokData = await grokResponse.json();
     const imageUrl = grokData.data?.[0]?.url;
+    const mimeType = grokData.data?.[0]?.mime_type || 'image/jpeg';
 
     if (!imageUrl) {
       throw new Error('No image URL in Grok response');
     }
 
+    // Download image immediately (xAI URLs expire quickly)
+    const imgResponse = await fetch(imageUrl);
+    if (!imgResponse.ok) {
+      throw new Error('Failed to download generated image');
+    }
+    const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    const base64 = imgBuffer.toString('base64');
+    const dataUrl = `data:${mimeType};base64,${base64}`;
+
     return res.status(200).json({
       success: true,
-      imageUrl,
+      imageUrl: dataUrl,
       method: 'grok-imagine',
       limit: MAX_GENERATIONS,
       used: globalCount,
