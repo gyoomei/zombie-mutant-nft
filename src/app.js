@@ -1,3 +1,5 @@
+const ethers = window.ethers;
+
 // Zombie Mutant NFT — Main App
 // Flow: Farcaster pfp → AI img2img zombie transform → Preview → (NFT mint)
 
