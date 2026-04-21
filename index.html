@@ -556,11 +556,37 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
+        gap: 14px;
         min-height: 292px;
         justify-content: center;
         position: relative;
         padding: 8px 0 4px;
+      }
+      .preview-kicker {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        width: 100%;
+        margin-bottom: 2px;
+        padding: 7px 12px;
+        border-radius: 999px;
+        background: rgba(255,255,255,0.03);
+        border: 1px solid rgba(255,255,255,0.08);
+        color: var(--text-muted);
+        font-size: 0.62rem;
+        font-weight: 800;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+      }
+      .preview-kicker strong {
+        color: #effff6;
+        font-weight: 900;
+        letter-spacing: 0.12em;
+      }
+      .preview-kicker em {
+        font-style: normal;
+        color: var(--green);
       }
       .preview-placeholder {
         color: var(--text-muted);
@@ -628,6 +654,7 @@
 
       .preview-images {
         display: flex;
+        flex-wrap: wrap;
         gap: 14px;
         align-items: center;
         justify-content: center;
@@ -640,10 +667,10 @@
       }
       .compare-card {
         flex: 1;
-        max-width: 182px;
+        max-width: 194px;
         position: relative;
-        padding: 12px;
-        border-radius: 24px;
+        padding: 14px;
+        border-radius: 26px;
         overflow: hidden;
         border: 1px solid rgba(255,255,255,0.08);
         box-shadow: 0 18px 42px rgba(0,0,0,0.34);
@@ -715,14 +742,8 @@
         transform: translateY(-1px) scale(1.01);
       }
       .compare-card .label {
-        margin-top: 10px;
-        font-size: 0.68rem;
-        color: var(--text-muted);
-        font-weight: 700;
-        text-transform: uppercase;
-        letter-spacing: 0.18em;
+        display: none;
       }
-      .compare-card.mutant .label { color: var(--green); }
       .unique-badge {
         position: absolute;
         top: 12px;
@@ -1451,21 +1472,20 @@
           </div>
           <!-- After login: show original → mystery box / mutant -->
           <div class="preview-images" id="preview-images" style="display:none">
+            <div class="preview-kicker"><strong>Original</strong><em>→</em><strong>Mutant</strong></div>
             <div class="compare-card original">
-              <div class="card-tag">Original</div>
+              <div class="card-tag">ORIGINAL</div>
               <div class="card-media">
                 <img id="img-original" src="" alt="Original" />
               </div>
-              <div class="label">Source</div>
             </div>
             <div class="arrow-divider" aria-hidden="true"><span>⚡</span></div>
             <div class="compare-card mutant">
-              <div class="unique-badge" id="unique-badge" style="display:none">Unique Mutant</div>
-              <div class="card-tag">Mutant</div>
+              <div class="unique-badge" id="unique-badge" style="display:none">UNIQUE MUTANT</div>
+              <div class="card-tag">MUTANT</div>
               <div class="card-media">
                 <img id="img-mutant" src="/mystery-box.jpg" alt="Mutant" />
               </div>
-              <div class="label">Result</div>
             </div>
           </div>
           <!-- Step indicator during processing -->
