@@ -506,7 +506,207 @@
         .gallery-card { width: 110px; height: 110px; }
         .header h1 { font-size: 1.4rem; }
       }
-    </style>
+    
+      /* ─── Particle Canvas (Zombie Fog + Embers) ─── */
+      #particles-canvas {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        pointer-events: none;
+        z-index: 0;
+      }
+
+      /* ─── Before/After Slider ─── */
+      .slider-container {
+        position: relative;
+        width: 100%;
+        aspect-ratio: 1;
+        border-radius: var(--radius-sm);
+        overflow: hidden;
+        cursor: col-resize;
+        touch-action: none;
+      }
+      .slider-container img {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+      }
+      .slider-container .img-after {
+        clip-path: inset(0 50% 0 0);
+        transition: clip-path 0.05s linear;
+      }
+      .slider-handle {
+        position: absolute;
+        top: 0;
+        left: 50%;
+        width: 3px;
+        height: 100%;
+        background: var(--green);
+        box-shadow: 0 0 12px var(--green-glow);
+        z-index: 2;
+        transform: translateX(-50%);
+        transition: left 0.05s linear;
+      }
+      .slider-handle::before {
+        content: '⟨⟩';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: var(--green);
+        color: #000;
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        font-weight: 700;
+        box-shadow: 0 0 20px var(--green-glow);
+      }
+      .slider-label {
+        position: absolute;
+        bottom: 8px;
+        padding: 4px 10px;
+        border-radius: 20px;
+        font-size: 0.65rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        z-index: 3;
+        backdrop-filter: blur(8px);
+      }
+      .slider-label.before { left: 8px; background: rgba(0,0,0,0.6); color: var(--text-muted); }
+      .slider-label.after { right: 8px; background: rgba(34,197,94,0.8); color: #000; }
+
+      /* ─── Confetti ─── */
+      .confetti-piece {
+        position: fixed;
+        width: 10px;
+        height: 10px;
+        z-index: 9999;
+        pointer-events: none;
+        animation: confettiFall 3s ease-out forwards;
+      }
+      @keyframes confettiFall {
+        0% { opacity: 1; transform: translateY(0) rotate(0deg) scale(1); }
+        100% { opacity: 0; transform: translateY(100vh) rotate(720deg) scale(0); }
+      }
+
+      /* ─── Neon Pulse on Mutant ─── */
+      .img-box.mutant img {
+        border-color: var(--green);
+        box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3);
+        animation: mutantPulse 2s ease-in-out infinite;
+      }
+      @keyframes mutantPulse {
+        0%, 100% { box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3); }
+        50% { box-shadow: 0 0 35px var(--green-glow), 0 0 60px rgba(34,197,94,0.2), 0 8px 32px rgba(0,0,0,0.3); }
+      }
+
+      /* ─── Generate Button Glow ─── */
+      .btn-primary {
+        animation: btnGlow 2s ease-in-out infinite;
+      }
+      @keyframes btnGlow {
+        0%, 100% { box-shadow: 0 4px 16px var(--green-glow); }
+        50% { box-shadow: 0 4px 30px var(--green-glow), 0 0 50px rgba(168,85,247,0.2); }
+      }
+
+      /* ─── Loading DNA Helix ─── */
+      .dna-loader {
+        display: flex;
+        gap: 4px;
+        justify-content: center;
+        align-items: center;
+        height: 60px;
+      }
+      .dna-strand {
+        width: 4px;
+        height: 30px;
+        background: var(--green);
+        border-radius: 2px;
+        animation: dnaWave 1.2s ease-in-out infinite;
+      }
+      .dna-strand:nth-child(1) { animation-delay: 0s; }
+      .dna-strand:nth-child(2) { animation-delay: 0.1s; }
+      .dna-strand:nth-child(3) { animation-delay: 0.2s; }
+      .dna-strand:nth-child(4) { animation-delay: 0.3s; }
+      .dna-strand:nth-child(5) { animation-delay: 0.4s; }
+      .dna-strand:nth-child(6) { animation-delay: 0.5s; }
+      .dna-strand:nth-child(7) { animation-delay: 0.6s; }
+      @keyframes dnaWave {
+        0%, 100% { height: 15px; background: var(--green); }
+        50% { height: 40px; background: var(--purple); }
+      }
+
+      /* ─── Floating Embers in Background ─── */
+      .ember {
+        position: fixed;
+        width: 3px;
+        height: 3px;
+        border-radius: 50%;
+        pointer-events: none;
+        z-index: 0;
+        animation: emberFloat linear infinite;
+      }
+      @keyframes emberFloat {
+        0% { opacity: 0; transform: translateY(100vh) scale(0); }
+        10% { opacity: 1; }
+        90% { opacity: 1; }
+        100% { opacity: 0; transform: translateY(-20px) scale(1); }
+      }
+
+      /* ─── Screen Shake on Mint ─── */
+      .shake {
+        animation: screenShake 0.5s ease-in-out;
+      }
+      @keyframes screenShake {
+        0%, 100% { transform: translateX(0); }
+        10% { transform: translateX(-5px) rotate(-0.5deg); }
+        20% { transform: translateX(5px) rotate(0.5deg); }
+        30% { transform: translateX(-5px) rotate(-0.5deg); }
+        40% { transform: translateX(5px) rotate(0.5deg); }
+        50% { transform: translateX(-3px); }
+        60% { transform: translateX(3px); }
+        70% { transform: translateX(-2px); }
+        80% { transform: translateX(2px); }
+      }
+
+      /* ─── Zombie Text Reveal ─── */
+      .zombie-text {
+        background: linear-gradient(135deg, var(--green), var(--purple), var(--red));
+        background-size: 200% 200%;
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+        animation: gradientShift 4s ease infinite;
+      }
+      @keyframes gradientShift {
+        0% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+        100% { background-position: 0% 50%; }
+      }
+
+      /* ─── Glitch Effect on Hover ─── */
+      .gallery-card:hover img {
+        animation: glitch 0.3s ease-in-out;
+      }
+      @keyframes glitch {
+        0% { filter: hue-rotate(0deg); }
+        25% { filter: hue-rotate(90deg) saturate(2); }
+        50% { filter: hue-rotate(-90deg) brightness(1.5); }
+        75% { filter: hue-rotate(45deg) contrast(1.5); }
+        100% { filter: hue-rotate(0deg); }
+      }
+
+</style>
   </head>
   <body>
     <div class="ambient-glow"></div>
@@ -575,7 +775,15 @@
           </div>
           <!-- Loading state -->
           <div class="loading-overlay" id="loading">
-            <div class="spinner-ring"></div>
+            <div class="dna-loader">
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+              <div class="dna-strand"></div>
+            </div>
             <div class="loading-text" id="loading-text">Transforming...<span class="loading-dots"></span></div>
           </div>
         </div>
@@ -607,5 +815,88 @@
 
     <script src="/farcaster-sdk-init.js"></script>
     <script type="module" src="/src/app.js"></script>
-  </body>
+  
+    <!-- Particle Canvas -->
+    <canvas id="particles-canvas"></canvas>
+
+    <!-- Floating Embers -->
+    <script>
+      // Create floating embers
+      for (let i = 0; i < 15; i++) {
+        const ember = document.createElement('div');
+        ember.className = 'ember';
+        ember.style.left = Math.random() * 100 + 'vw';
+        ember.style.animationDuration = (8 + Math.random() * 12) + 's';
+        ember.style.animationDelay = (Math.random() * 10) + 's';
+        ember.style.background = Math.random() > 0.5 
+          ? `rgba(34, 197, 94, ${0.3 + Math.random() * 0.4})` 
+          : `rgba(168, 85, 247, ${0.3 + Math.random() * 0.4})`;
+        ember.style.width = (2 + Math.random() * 3) + 'px';
+        ember.style.height = ember.style.width;
+        document.body.appendChild(ember);
+      }
+    </script>
+
+    <!-- Zombie Fog Particles -->
+    <script>
+      const canvas = document.getElementById('particles-canvas');
+      const ctx = canvas.getContext('2d');
+      let particles = [];
+
+      function resizeCanvas() {
+        canvas.width = window.innerWidth;
+        canvas.height = window.innerHeight;
+      }
+      resizeCanvas();
+      window.addEventListener('resize', resizeCanvas);
+
+      class FogParticle {
+        constructor() {
+          this.reset();
+        }
+        reset() {
+          this.x = Math.random() * canvas.width;
+          this.y = canvas.height + 20;
+          this.size = 30 + Math.random() * 80;
+          this.speedY = -(0.2 + Math.random() * 0.5);
+          this.speedX = (Math.random() - 0.5) * 0.3;
+          this.opacity = 0;
+          this.maxOpacity = 0.03 + Math.random() * 0.05;
+          this.fadeIn = true;
+        }
+        update() {
+          this.x += this.speedX;
+          this.y += this.speedY;
+          if (this.fadeIn) {
+            this.opacity += 0.001;
+            if (this.opacity >= this.maxOpacity) this.fadeIn = false;
+          } else {
+            this.opacity -= 0.0005;
+          }
+          if (this.y < -this.size || this.opacity <= 0) this.reset();
+        }
+        draw() {
+          ctx.beginPath();
+          const gradient = ctx.createRadialGradient(this.x, this.y, 0, this.x, this.y, this.size);
+          gradient.addColorStop(0, `rgba(34, 197, 94, ${this.opacity})`);
+          gradient.addColorStop(1, 'rgba(34, 197, 94, 0)');
+          ctx.fillStyle = gradient;
+          ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      for (let i = 0; i < 8; i++) {
+        particles.push(new FogParticle());
+      }
+
+      function animateParticles() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        particles.forEach(p => { p.update(); p.draw(); });
+        requestAnimationFrame(animateParticles);
+      }
+      animateParticles();
+    </script>
+
+</body>
 </html>

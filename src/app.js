@@ -28,6 +28,35 @@ const state = {
   step: 1,
 };
 
+
+// ─── Confetti Effect ──────────────────────────────────────
+function spawnConfetti() {
+  const colors = ['#22c55e', '#a855f7', '#ef4444', '#eab308', '#3b82f6', '#f97316'];
+  const shapes = ['square', 'circle'];
+  
+  for (let i = 0; i < 50; i++) {
+    const piece = document.createElement('div');
+    piece.className = 'confetti-piece';
+    piece.style.left = (20 + Math.random() * 60) + 'vw';
+    piece.style.top = '-10px';
+    piece.style.background = colors[Math.floor(Math.random() * colors.length)];
+    piece.style.borderRadius = shapes[Math.floor(Math.random() * shapes.length)] === 'circle' ? '50%' : '2px';
+    piece.style.width = (6 + Math.random() * 8) + 'px';
+    piece.style.height = piece.style.width;
+    piece.style.animationDuration = (2 + Math.random() * 2) + 's';
+    piece.style.animationDelay = (Math.random() * 0.5) + 's';
+    document.body.appendChild(piece);
+    setTimeout(() => piece.remove(), 4000);
+  }
+}
+
+// ─── Screen Shake ─────────────────────────────────────────
+function screenShake() {
+  document.querySelector('.app').classList.add('shake');
+  setTimeout(() => document.querySelector('.app').classList.remove('shake'), 500);
+}
+
+
 // ─── DOM ──────────────────────────────────────────────────
 const $ = (sel) => document.querySelector(sel);
 const els = {
@@ -481,6 +510,8 @@ async function mintNFT() {
 
     setStep(4);
     setStatus(`NFT Minted! Token #${tokenId} 🧟🎉`, 'success');
+    spawnConfetti();
+    screenShake();
 
     // Show mint result
     els.btnMint.textContent = 'Minted! ✅';
