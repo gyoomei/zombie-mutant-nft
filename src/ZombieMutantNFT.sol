@@ -16,7 +16,7 @@ contract ZombieMutantNFT is ERC721, ERC721URIStorage, Ownable {
 
     function mint(address to, string memory uri) public payable returns (uint256) {
         require(_nextTokenId < maxSupply, "Max supply reached");
-        require(msg.value >= mintPrice, "Insufficient payment (need 0.00005 ETH ≈ $0.1)");
+        require(msg.value >= mintPrice, "Insufficient payment (need 0.00005 ETH ~ $0.1)");
 
         uint256 tokenId = _nextTokenId++;
         _safeMint(to, tokenId);
