@@ -90,14 +90,109 @@ async function fetchContext(sdk) {
   }
 }
 
-// ─── Generate Mutant (preserve original + zombie effect) ──
+// ─── Canvas Zombie Compositor ─────────────────────────────
+// Ambil foto ASLI, tambah efek zombie via canvas
+// 100% original preserved + horror effects on top
+
+async function zombifyWithCanvas(originalUrl, overlayUrls = {}) {
+  return new Promise((resolve, reject) => {
+    const canvas = document.createElement('canvas');
+    const ctx = canvas.getContext('2d');
+    const size = 512;
+    canvas.width = size;
+    canvas.height = size;
+
+    const img = new Image();
+    img.crossOrigin = 'anonymous';
+    img.onload = () => {
+      // Draw original image
+      ctx.drawImage(img, 0, 0, size, size);
+
+      // Layer 1: Green tint overlay (decayed skin)
+      ctx.globalCompositeOperation = 'multiply';
+      ctx.fillStyle = 'rgba(40, 80, 40, 0.35)';
+      ctx.fillRect(0, 0, size, size);
+
+      // Layer 2: Dark desaturation
+      ctx.globalCompositeOperation = 'saturation';
+      ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+      ctx.fillRect(0, 0, size, size);
+
+      // Layer 3: Red glow in center (zombie eye effect)
+      ctx.globalCompositeOperation = 'screen';
+      const glow = ctx.createRadialGradient(size/2, size/2, 20, size/2, size/2, 200);
+      glow.addColorStop(0, 'rgba(200, 30, 30, 0.4)');
+      glow.addColorStop(0.3, 'rgba(150, 20, 20, 0.15)');
+      glow.addColorStop(1, 'rgba(0, 0, 0, 0)');
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, size, size);
+
+      // Layer 4: Dark vignette (creepy edges)
+      ctx.globalCompositeOperation = 'multiply';
+      const vignette = ctx.createRadialGradient(size/2, size/2, 80, size/2, size/2, size/1.5);
+      vignette.addColorStop(0, 'rgba(255, 255, 255, 1)');
+      vignette.addColorStop(0.7, 'rgba(100, 100, 100, 0.8)');
+      vignette.addColorStop(1, 'rgba(20, 20, 20, 0.9)');
+      ctx.fillStyle = vignette;
+      ctx.fillRect(0, 0, size, size);
+
+      // Layer 5: Noise/grain texture
+      ctx.globalCompositeOperation = 'overlay';
+      for (let i = 0; i < 3000; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const brightness = Math.random() > 0.5 ? 'rgba(255,255,255,0.03)' : 'rgba(0,0,0,0.05)';
+        ctx.fillStyle = brightness;
+        ctx.fillRect(x, y, 1, 1);
+      }
+
+      // Layer 6: Random blood drops
+      ctx.globalCompositeOperation = 'source-over';
+      for (let i = 0; i < 15; i++) {
+        const x = Math.random() * size;
+        const y = Math.random() * size;
+        const r = 2 + Math.random() * 8;
+        ctx.beginPath();
+        ctx.arc(x, y, r, 0, Math.PI * 2);
+        ctx.fillStyle = `rgba(${120 + Math.random()*60}, ${Math.random()*20}, ${Math.random()*10}, ${0.4 + Math.random()*0.4})`;
+        ctx.fill();
+      }
+
+      // Layer 7: Overlay texture (blood splatter from API)
+      if (overlayUrls.blood) {
+        const bloodImg = new Image();
+        bloodImg.crossOrigin = 'anonymous';
+        bloodImg.onload = () => {
+          ctx.globalCompositeOperation = 'overlay';
+          ctx.globalAlpha = 0.3;
+          ctx.drawImage(bloodImg, 0, 0, size, size);
+          ctx.globalAlpha = 1;
+          finish();
+        };
+        bloodImg.onerror = () => finish();
+        bloodImg.src = overlayUrls.blood;
+      } else {
+        finish();
+      }
+
+      function finish() {
+        ctx.globalCompositeOperation = 'source-over';
+        resolve(canvas.toDataURL('image/jpeg', 0.9));
+      }
+    };
+    img.onerror = () => reject(new Error('Failed to load original image'));
+    img.src = originalUrl;
+  });
+}
+
+// ─── Generate Mutant (canvas compositing) ─────────────────
 async function generateMutant(pfpUrl, username, displayName) {
   if (!pfpUrl) {
-    // No pfp, use fallback text-to-image
     return { original: null, zombie: await generateMutantFallback(displayName || username) };
   }
 
   try {
+    // Get original + overlay textures from API
     const response = await fetch('/api/zombify', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -106,11 +201,12 @@ async function generateMutant(pfpUrl, username, displayName) {
 
     if (response.ok) {
       const data = await response.json();
-      if (data.success) {
-        return { original: data.original, zombie: data.zombie };
+      if (data.success && data.original) {
+        // Composite on client-side canvas
+        const zombieResult = await zombifyWithCanvas(data.original, data.overlays || {});
+        return { original: data.original, zombie: zombieResult };
       }
     }
-    console.warn('zombify failed, using fallback');
   } catch (e) {
     console.warn('zombify error:', e.message);
   }
