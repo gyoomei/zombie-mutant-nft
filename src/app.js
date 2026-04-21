@@ -7,6 +7,14 @@ const ethers = window.ethers;
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
 const MAX_GENERATIONS = 100;
 const GEN_COUNT_KEY = 'zombie_mutant_gen_count';
+const BASE_CHAIN_ID = '0x2105'; // Base mainnet (8453)
+const BASE_CHAIN_PARAMS = {
+  chainId: BASE_CHAIN_ID,
+  chainName: 'Base',
+  nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+  rpcUrls: ['https://mainnet.base.org'],
+  blockExplorerUrls: ['https://basescan.org'],
+};
 
 // ─── Generation Counter (localStorage) ────────────────────
 function getGenCount() {
@@ -335,7 +343,26 @@ async function fetchContext(sdk) {
   }
 }
 
-// ─── Canvas Zombie Compositor ─────────────────────────────
+async function ensureBaseMainnet(provider) {
+  const chainId = await provider.request({ method: 'eth_chainId' });
+  if (chainId === BASE_CHAIN_ID) return;
+  try {
+    await provider.request({
+      method: 'wallet_switchEthereumChain',
+      params: [{ chainId: BASE_CHAIN_ID }],
+    });
+  } catch (switchError) {
+    if (switchError?.code === 4902) {
+      await provider.request({
+        method: 'wallet_addEthereumChain',
+        params: [BASE_CHAIN_PARAMS],
+      });
+      return;
+    }
+    throw new Error('Please switch your wallet to Base mainnet (8453)');
+  }
+}
+
 // Ambil foto ASLI, tambah efek zombie via canvas
 // 100% original preserved + horror effects on top
 
@@ -658,7 +685,7 @@ async function mintNFT() {
     "function totalMinted() view returns (uint256)",
     "function mintPrice() view returns (uint256)",
   ];
-  const MINT_PRICE = '0.001'; // ETH
+  const MINT_PRICE = '0.00005'; // ETH on Base mainnet
 
   els.btnMint.disabled = true;
   setStatus('Connecting wallet...', 'loading', '💳');
@@ -674,6 +701,8 @@ async function mintNFT() {
     } else {
       throw new Error('No wallet found. Open in Farcaster or use a wallet browser.');
     }
+
+    await ensureBaseMainnet(provider);
 
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
@@ -705,11 +734,10 @@ async function mintNFT() {
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
     const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
-    const mintPriceWei = await readContract.mintPrice();
     const mintTx = await readContract.getFunction('mint').populateTransaction(
       userAddress,
       ipfsData.tokenUri,
-      { value: mintPriceWei }
+      { value: ethers.parseEther(MINT_PRICE) }
     );
     mintTx.gasLimit = 350000n;
 
@@ -776,7 +804,7 @@ els.btnMint.addEventListener('click', async (e) => {
     "function totalMinted() view returns (uint256)",
     "function mintPrice() view returns (uint256)",
   ];
-  const MINT_PRICE = '0.001'; // ETH
+  const MINT_PRICE = '0.00005'; // ETH on Base mainnet
 
   setStatus('Connecting wallet...', 'loading', '💳');
   setStep(3);
@@ -791,6 +819,8 @@ els.btnMint.addEventListener('click', async (e) => {
     } else {
       throw new Error('No wallet found. Open in Farcaster or use a wallet browser.');
     }
+
+    await ensureBaseMainnet(provider);
 
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
@@ -822,11 +852,10 @@ els.btnMint.addEventListener('click', async (e) => {
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
     const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
-    const mintPriceWei = await readContract.mintPrice();
     const mintTx = await readContract.getFunction('mint').populateTransaction(
       userAddress,
       ipfsData.tokenUri,
-      { value: mintPriceWei }
+      { value: ethers.parseEther(MINT_PRICE) }
     );
     mintTx.gasLimit = 350000n;
 
