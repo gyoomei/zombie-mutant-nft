@@ -2,8 +2,22 @@
 // Flow: Farcaster pfp → AI img2img zombie transform → Preview → (NFT mint)
 
 // ─── Config ───────────────────────────────────────────────
-// Pollinations.ai — totally free, no API key needed
 const POLLINATIONS_BASE = 'https://image.pollinations.ai/prompt';
+const MAX_GENERATIONS = 100;
+const GEN_COUNT_KEY = 'zombie_mutant_gen_count';
+
+// ─── Generation Counter (localStorage) ────────────────────
+function getGenCount() {
+  return parseInt(localStorage.getItem(GEN_COUNT_KEY) || '0', 10);
+}
+function incrementGenCount() {
+  const count = getGenCount() + 1;
+  localStorage.setItem(GEN_COUNT_KEY, count.toString());
+  return count;
+}
+function getRemaining() {
+  return MAX_GENERATIONS - getGenCount();
+}
 
 // ─── State ────────────────────────────────────────────────
 const state = {
@@ -185,54 +199,78 @@ async function zombifyWithCanvas(originalUrl, overlayUrls = {}) {
   });
 }
 
-// ─── Generate Mutant (canvas compositing) ─────────────────
+// ─── Generate Mutant (xAI Grok API + limit 100) ──────────
 async function generateMutant(pfpUrl, username, displayName) {
-  if (!pfpUrl) {
-    return { original: null, zombie: await generateMutantFallback(displayName || username) };
+  const name = displayName || username || 'character';
+
+  // Check limit
+  if (getRemaining() <= 0) {
+    throw new Error('Generation limit reached (100 max). Come back later!');
   }
 
+  // Primary: Grok API
   try {
-    // Get original + overlay textures from API
-    const response = await fetch('/api/zombify', {
+    const response = await fetch('/api/generate-mutant', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ pfpUrl }),
+      body: JSON.stringify({ pfpUrl, username, displayName }),
     });
 
     if (response.ok) {
       const data = await response.json();
-      if (data.success && data.original) {
-        // Composite on client-side canvas
-        const zombieResult = await zombifyWithCanvas(data.original, data.overlays || {});
-        return { original: data.original, zombie: zombieResult };
+      if (data.success && data.imageUrl) {
+        incrementGenCount();
+        return { original: pfpUrl, zombie: data.imageUrl };
       }
     }
+
+    // If limit reached on server
+    if (response.status === 429) {
+      const data = await response.json();
+      throw new Error(data.error || 'Generation limit reached');
+    }
   } catch (e) {
-    console.warn('zombify error:', e.message);
+    if (e.message.includes('limit')) throw e;
+    console.warn('Grok API failed, using fallback:', e.message);
   }
 
-  // Fallback
-  return { original: pfpUrl, zombie: await generateMutantFallback(displayName || username) };
+  // Fallback: Pollinations.ai (canvas compositing)
+  incrementGenCount();
+  return generateMutantFallback(pfpUrl, name);
 }
 
-// ─── Fallback (simple prompt, no vision) ─────────────────
-async function generateMutantFallback(name) {
+// ─── Fallback: Canvas compositing ─────────────────────────
+async function generateMutantFallback(pfpUrl, name) {
+  if (pfpUrl) {
+    try {
+      const resp = await fetch('/api/zombify', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ pfpUrl }),
+      });
+      if (resp.ok) {
+        const data = await resp.json();
+        if (data.success && data.original) {
+          const zombie = await zombifyWithCanvas(data.original, data.overlays || {});
+          return { original: data.original, zombie };
+        }
+      }
+    } catch (e) {
+      console.warn('Canvas fallback failed:', e.message);
+    }
+  }
+  // Last resort: text-to-image
   const prompt = encodeURIComponent(
-    `zombie mutant portrait of ${name}, a Farcaster user, ` +
-    `undead horror style, rotting flesh, exposed bones, glowing red eyes, ` +
-    `dark green decaying skin, blood splatter, torn clothing, ` +
-    `dark moody lighting, horror art, highly detailed, ` +
-    `cartoon style, circular portrait frame, dark background`
+    `zombie mutant portrait of ${name}, undead horror, rotting flesh, glowing red eyes, dark green skin, blood splatter, dark moody lighting, horror art, highly detailed, dark background`
   );
   const url = `${POLLINATIONS_BASE}/${prompt}?width=512&height=512&nologo=true&seed=${Date.now()}`;
-
   return new Promise((resolve, reject) => {
     const img = new Image();
     img.crossOrigin = 'anonymous';
-    img.onload = () => resolve(url);
-    img.onerror = () => reject(new Error('Failed to generate image'));
+    img.onload = () => resolve({ original: pfpUrl, zombie: url });
+    img.onerror = () => reject(new Error('Generation failed'));
     img.src = url;
-    setTimeout(() => reject(new Error('Generation timed out')), 30000);
+    setTimeout(() => reject(new Error('Timeout')), 30000);
   });
 }
 
@@ -306,7 +344,8 @@ async function init() {
     // Enable generate button
     els.btnGenerate.disabled = false;
     setStep(2);
-    setStatus('Ready — tap Generate to become a mutant 🧟');
+    const remaining = getRemaining();
+    setStatus(`Ready — tap Generate to become a mutant 🧟 (${remaining} generations left)`);
   } else {
     setStatus('No profile picture found', 'error');
   }
@@ -345,7 +384,8 @@ els.btnGenerate.addEventListener('click', async () => {
     els.btnShare.style.display = 'block';
 
     setStep(4);
-    setStatus('Mutant created! 🧟 Mint as NFT or share it.', 'success');
+    const remaining = getRemaining();
+    setStatus(`Mutant created! 🧟 ${remaining} generations left`, 'success');
   } catch (e) {
     hideLoading();
     els.previewPlaceholder.style.display = 'block';
