@@ -98,6 +98,7 @@ const els = {
   btnMint: $('#btn-mint'),
   btnShare: $('#btn-share'),
   status: $('#status'),
+  statusText: $('#status-text'),
 };
 
 // ─── Step indicator ───────────────────────────────────────
@@ -133,9 +134,71 @@ function showUniqueBadge() {
 }
 
 // ─── Status ───────────────────────────────────────────────
-function setStatus(msg, type = '') {
-  els.status.textContent = msg;
-  els.status.className = 'status-bar' + (type ? ` ${type}` : '');
+const STATUS_ICONS = {
+  connecting: '🔗',
+  loading: '⏳',
+  uploading: '⬆️',
+  wallet: '💳',
+  minting: '⛓️',
+  success: '✅',
+  error: '❌',
+  warning: '⚠️',
+  info: '💡',
+};
+
+function setStatus(msg, type = '', icon = null) {
+  const statusEl = els.status;
+  const textEl = els.statusText;
+  if (!textEl) {
+    // Fallback if status-text doesn't exist yet
+    statusEl.textContent = msg;
+    statusEl.className = 'status-bar' + (type ? ` ${type}` : '');
+    return;
+  }
+
+  textEl.textContent = msg;
+  statusEl.className = 'status-bar' + (type ? ` ${type}` : '');
+
+  // Set icon
+  let iconEl = statusEl.querySelector('.status-icon');
+  if (!iconEl) {
+    iconEl = document.createElement('span');
+    iconEl.className = 'status-icon';
+    statusEl.insertBefore(iconEl, textEl);
+  }
+  iconEl.textContent = icon || STATUS_ICONS[type] || STATUS_ICONS.info;
+
+  // Add loading class for animated icons
+  if (type === 'loading') {
+    statusEl.classList.add('loading');
+  } else {
+    statusEl.classList.remove('loading');
+  }
+
+  // Add typing animation for long messages
+  if (msg.length > 40) {
+    textEl.classList.add('status-typing');
+    setTimeout(() => textEl.classList.remove('status-typing'), 3000);
+  } else {
+    textEl.classList.remove('status-typing');
+  }
+
+  // Show retry button on error
+  const existingRetry = statusEl.querySelector('.status-retry');
+  if (type === 'error' && !existingRetry) {
+    const retryBtn = document.createElement('button');
+    retryBtn.className = 'status-retry';
+    retryBtn.textContent = '↻ Retry';
+    retryBtn.onclick = () => {
+      // Trigger generate retry
+      if (!els.btnGenerate.disabled) {
+        els.btnGenerate.click();
+      }
+    };
+    statusEl.appendChild(retryBtn);
+  } else if (type !== 'error' && existingRetry) {
+    existingRetry.remove();
+  }
 }
 
 // ─── Loading ──────────────────────────────────────────────
@@ -368,7 +431,7 @@ async function shareOnFarcaster() {
 
 // ─── App Init ─────────────────────────────────────────────
 async function init() {
-  setStatus('Connecting to Farcaster...');
+  setStatus('Connecting to Farcaster...', 'loading', '🔗');
 
   // 1. Init Farcaster SDK
   const sdk = await initFarcaster();
@@ -378,7 +441,7 @@ async function init() {
     setStatus('Open this in Farcaster to get started!', 'error');
     // Enable demo mode for testing outside Farcaster
     els.btnGenerate.disabled = false;
-    setStatus(`Demo mode — ${getRemaining()}/100 generations left`);
+    setStatus(`Demo mode — ${getRemaining()}/100 generations left`, 'info', '🎮');
 
     // Set demo user data for testing
     state.context = {
@@ -419,7 +482,7 @@ async function init() {
     els.btnGenerate.disabled = false;
     setStep(2);
     const remaining = getRemaining();
-    setStatus(`Ready — ${remaining}/100 generations left`);
+    setStatus(`Ready — ${remaining}/100 generations left`, 'info', '🎯');
   } else {
     setStatus('No profile picture found', 'error');
   }
@@ -439,7 +502,7 @@ els.btnGenerate.addEventListener('click', async (e) => {
   if (indicator) indicator.classList.add('active');
   setPreviewStep(1);
   showLoading('Transforming your pfp...');
-  setStatus('Generating your zombie mutant...');
+  setStatus('Generating your zombie mutant...', 'loading', '🧟');
 
   try {
     setPreviewStep(2); // Analyzing done, now applying mutation
@@ -500,7 +563,7 @@ async function mintNFT() {
   const MINT_PRICE = '0.001'; // ETH
 
   els.btnMint.disabled = true;
-  setStatus('Connecting wallet...');
+  setStatus('Connecting wallet...', 'loading', '💳');
   setStep(3);
 
   try {
@@ -517,10 +580,10 @@ async function mintNFT() {
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     const userAddress = accounts[0];
-    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
+    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, 'info', '✅');
 
     // 3. Upload image to IPFS
-    setStatus('Uploading to IPFS...');
+    setStatus('Uploading to IPFS...', 'loading', '⬆️');
     const ipfsResp = await fetch('/api/upload-ipfs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -537,7 +600,7 @@ async function mintNFT() {
     }
 
     const ipfsData = await ipfsResp.json();
-    setStatus('Minting NFT on Base...');
+    setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
     // 4. Encode mint function call
     const ethersProvider = new ethers.BrowserProvider(provider);
@@ -610,7 +673,7 @@ els.btnMint.addEventListener('click', async (e) => {
   ];
   const MINT_PRICE = '0.001'; // ETH
 
-  setStatus('Connecting wallet...');
+  setStatus('Connecting wallet...', 'loading', '💳');
   setStep(3);
 
   try {
@@ -627,10 +690,10 @@ els.btnMint.addEventListener('click', async (e) => {
     // 2. Request accounts
     const accounts = await provider.request({ method: 'eth_requestAccounts' });
     const userAddress = accounts[0];
-    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`);
+    setStatus(`Wallet: ${userAddress.slice(0,6)}...${userAddress.slice(-4)}`, 'info', '✅');
 
     // 3. Upload image to IPFS
-    setStatus('Uploading to IPFS...');
+    setStatus('Uploading to IPFS...', 'loading', '⬆️');
     const ipfsResp = await fetch('/api/upload-ipfs', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -647,7 +710,7 @@ els.btnMint.addEventListener('click', async (e) => {
     }
 
     const ipfsData = await ipfsResp.json();
-    setStatus('Minting NFT on Base...');
+    setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
     // 4. Send mint transaction
     const ethersProvider = new ethers.BrowserProvider(provider);
