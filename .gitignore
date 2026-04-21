@@ -7,3 +7,8 @@ dist
 # Foundry
 out/
 .cache/
+
+# Foundry
+out/
+.cache/
+foundry.lock
