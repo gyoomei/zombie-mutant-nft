@@ -701,15 +701,20 @@ async function mintNFT() {
     state.lastIpfs = ipfsData;
     setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
-    // 4. Encode mint function call
+    // 4. Prepare mint transaction without relying on estimateGas
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
+    const mintPriceWei = await readContract.mintPrice();
+    const mintTx = await readContract.getFunction('mint').populateTransaction(
+      userAddress,
+      ipfsData.tokenUri,
+      { value: mintPriceWei }
+    );
+    mintTx.gasLimit = 350000n;
 
     // 5. Send mint transaction
-    const tx = await contract.mint(userAddress, ipfsData.tokenUri, {
-      value: ethers.parseEther(MINT_PRICE),
-    });
+    const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
     const receipt = await tx.wait();
@@ -717,7 +722,7 @@ async function mintNFT() {
     // 6. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
       try {
-        const parsed = contract.interface.parseLog(log);
+        const parsed = readContract.interface.parseLog(log);
         return parsed?.name === 'NFTMinted';
       } catch { return false; }
     });
@@ -813,14 +818,20 @@ els.btnMint.addEventListener('click', async (e) => {
     state.lastIpfs = ipfsData;
     setStatus('Minting NFT on Base...', 'loading', '⛓️');
 
-    // 4. Send mint transaction
+    // 4. Prepare mint transaction without relying on estimateGas
     const ethersProvider = new ethers.BrowserProvider(provider);
     const signer = await ethersProvider.getSigner();
-    const contract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, signer);
+    const readContract = new ethers.Contract(CONTRACT_ADDRESS, CONTRACT_ABI, ethersProvider);
+    const mintPriceWei = await readContract.mintPrice();
+    const mintTx = await readContract.getFunction('mint').populateTransaction(
+      userAddress,
+      ipfsData.tokenUri,
+      { value: mintPriceWei }
+    );
+    mintTx.gasLimit = 350000n;
 
-    const tx = await contract.mint(userAddress, ipfsData.tokenUri, {
-      value: ethers.parseEther(MINT_PRICE),
-    });
+    // 5. Send mint transaction
+    const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
     const receipt = await tx.wait();
@@ -828,7 +839,7 @@ els.btnMint.addEventListener('click', async (e) => {
     // 5. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
       try {
-        const parsed = contract.interface.parseLog(log);
+        const parsed = readContract.interface.parseLog(log);
         return parsed?.name === 'NFTMinted';
       } catch { return false; }
     });
