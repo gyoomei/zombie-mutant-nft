@@ -1,13 +1,13 @@
 // /api/generate-mutant.js
-// Serverless Function — Generate zombie mutant pakai xAI Grok API
-// Limit: 100 generations
-// Returns base64 image (xAI URLs expire quickly)
+// 2-Step Flow:
+// 1. grok-4-fast-non-reasoning → analyze pfp, extract features
+// 2. grok-imagine-image-pro → generate 2D zombie preserving original features
+// Limit: 100 generations. Returns base64 image.
 
 export const config = {
-  maxDuration: 30,
+  maxDuration: 60,
 };
 
-// In-memory counter (resets on deploy, but serves as server-side check)
 let globalCount = 0;
 const MAX_GENERATIONS = 100;
 
@@ -32,65 +32,128 @@ export default async function handler(req, res) {
       });
     }
 
-    // Get API key from env (server-side only, not exposed to client)
     const apiKey = process.env.XAI_API_KEY;
     if (!apiKey) {
       return res.status(500).json({ error: 'XAI_API_KEY not configured' });
     }
 
-    // Build zombie prompt based on user info
     const name = displayName || username || 'character';
-    const zombiePrompt = [
-      `Zombie mutant portrait of ${name}, a Farcaster user, `,
-      `undead horror transformation, rotting decaying flesh with green tint, `,
-      `exposed bones and torn tendons, glowing fiery red eyes with dark hollow sockets, `,
-      `dark green-grey decayed skin patches, blood splatter and deep wounds, `,
-      `torn ripped dark clothing, dark moody horror lighting with green fog, `,
-      `dramatic shadows, highly detailed horror digital art, `,
-      `dark background with subtle embers, horror NFT collectible art style, `,
-      `portrait composition, 4K quality, visceral and menacing`,
-    ].join('');
 
-    // Call xAI Grok Image API
-    const grokResponse = await fetch('https://api.x.ai/v1/images/generations', {
+    // ─── Step 1: Analyze PFP with Vision ───
+    let pfpDescription = '';
+    if (pfpUrl) {
+      try {
+        const visionResp = await fetch('https://api.x.ai/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${apiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'grok-4-fast-non-reasoning',
+            messages: [
+              {
+                role: 'user',
+                content: [
+                  {
+                    type: 'image_url',
+                    image_url: { url: pfpUrl },
+                  },
+                  {
+                    type: 'text',
+                    text: `Describe this profile picture in 2-3 sentences. Focus ONLY on:
+- Art style (2D cartoon/anime/pixel/vector/realistic?)
+- Main colors
+- Key facial features (hair, eyes, expression)
+- Any accessories or background elements
+Be concise. This description will be used to create a zombie version that looks exactly like this.`,
+                  },
+                ],
+              },
+            ],
+          }),
+        });
+
+        if (visionResp.ok) {
+          const visionData = await visionResp.json();
+          pfpDescription = visionData.choices?.[0]?.message?.content || '';
+          console.log('PFP description:', pfpDescription);
+        }
+      } catch (e) {
+        console.warn('Vision analysis failed:', e.message);
+      }
+    }
+
+    // ─── Step 2: Build Zombie Prompt ───
+    // Preserve original style + add zombie effects
+    let zombiePrompt;
+
+    if (pfpDescription) {
+      zombiePrompt = [
+        `A zombie mutant version of this character: "${pfpDescription}"`,
+        `Transform into undead zombie: green-tinted decayed skin, glowing red eyes,`,
+        `dark hollow eye sockets, subtle rot patches, minor blood drops,`,
+        `dark moody background with green fog.`,
+        `CRITICAL: Keep the EXACT SAME art style as the original (${pfpDescription.includes('3D') ? '3D' : '2D flat cartoon'}).`,
+        `CRITICAL: Keep the same face shape, features, pose, and colors.`,
+        `Do NOT make it photorealistic or hyper-detailed.`,
+        `Style: flat 2D illustration, clean lines, same proportions as original.`,
+        `Horror NFT collectible art, portrait composition.`,
+      ].join(' ');
+    } else {
+      // Fallback if no pfp or vision failed
+      zombiePrompt = [
+        `2D cartoon zombie mutant portrait of "${name}".`,
+        `Flat illustration style, NOT photorealistic.`,
+        `Green-tinted skin, glowing red eyes, dark eye sockets,`,
+        `subtle decay patches, blood drops.`,
+        `Dark moody background with green fog.`,
+        `Clean lines, simple shading, horror art style.`,
+        `Portrait composition, NFT collectible.`,
+      ].join(' ');
+    }
+
+    console.log('Zombie prompt:', zombiePrompt.substring(0, 200) + '...');
+
+    // ─── Step 3: Generate Zombie Image ───
+    const genResp = await fetch('https://api.x.ai/v1/images/generations', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'Authorization': `Bearer ${apiKey}`,
       },
       body: JSON.stringify({
-        model: 'grok-imagine-image',
+        model: 'grok-imagine-image-pro',
         prompt: zombiePrompt,
         n: 1,
       }),
     });
 
-    if (!grokResponse.ok) {
-      const errText = await grokResponse.text();
-      throw new Error(`Grok API error (${grokResponse.status}): ${errText}`);
+    if (!genResp.ok) {
+      const errText = await genResp.text();
+      throw new Error(`Grok image error (${genResp.status}): ${errText}`);
     }
 
-    const grokData = await grokResponse.json();
-    const imageUrl = grokData.data?.[0]?.url;
-    const mimeType = grokData.data?.[0]?.mime_type || 'image/jpeg';
+    const genData = await genResp.json();
+    const imageUrl = genData.data?.[0]?.url;
+    const mimeType = genData.data?.[0]?.mime_type || 'image/jpeg';
 
     if (!imageUrl) {
-      throw new Error('No image URL in Grok response');
+      throw new Error('No image in Grok response');
     }
 
-    // Download image immediately (xAI URLs expire quickly)
-    const imgResponse = await fetch(imageUrl);
-    if (!imgResponse.ok) {
-      throw new Error('Failed to download generated image');
-    }
-    const imgBuffer = Buffer.from(await imgResponse.arrayBuffer());
+    // Download immediately (xAI URLs expire)
+    const imgResp = await fetch(imageUrl);
+    if (!imgResp.ok) throw new Error('Failed to download image');
+    const imgBuffer = Buffer.from(await imgResp.arrayBuffer());
     const base64 = imgBuffer.toString('base64');
     const dataUrl = `data:${mimeType};base64,${base64}`;
 
     return res.status(200).json({
       success: true,
       imageUrl: dataUrl,
-      method: 'grok-imagine',
+      pfpDescription,
+      method: 'grok-vision+imagine',
       limit: MAX_GENERATIONS,
       used: globalCount,
       remaining: MAX_GENERATIONS - globalCount,
