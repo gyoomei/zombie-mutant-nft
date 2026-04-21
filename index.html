@@ -171,23 +171,30 @@
       .gallery-scroll {
         display: flex;
         gap: 10px;
-        overflow-x: auto;
-        scroll-snap-type: x mandatory;
-        -webkit-overflow-scrolling: touch;
-        scrollbar-width: none;
+        overflow: hidden;
         padding: 4px 0;
-        margin: 0 -4px;
-        padding-left: 4px;
-        padding-right: 4px;
+        -webkit-mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
+        mask-image: linear-gradient(90deg, transparent 0%, #000 8%, #000 92%, transparent 100%);
       }
-      .gallery-scroll::-webkit-scrollbar { display: none; }
+      .gallery-track {
+        display: flex;
+        gap: 10px;
+        animation: scrollLoop 20s linear infinite;
+        will-change: transform;
+      }
+      .gallery-track:hover {
+        animation-play-state: paused;
+      }
+      @keyframes scrollLoop {
+        0% { transform: translateX(0); }
+        100% { transform: translateX(calc(-140px * 4 - 40px)); }
+      }
       .gallery-card {
         flex: 0 0 auto;
         width: 130px;
         height: 130px;
         border-radius: var(--radius-sm);
         overflow: hidden;
-        scroll-snap-align: start;
         border: 1px solid var(--card-border);
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         position: relative;
@@ -491,15 +498,6 @@
         font-size: 0.68rem;
         padding: 4px 0;
       }
-      .scroll-hint svg {
-        width: 14px;
-        height: 14px;
-        animation: swipeHint 2s ease-in-out infinite;
-      }
-      @keyframes swipeHint {
-        0%, 100% { transform: translateX(0); opacity: 0.4; }
-        50% { transform: translateX(6px); opacity: 1; }
-      }
 
       /* ─── Responsive ─── */
       @media (max-width: 360px) {
@@ -730,14 +728,20 @@
       <div class="gallery-section glass-card">
         <div class="gallery-label">Mutant Previews</div>
         <div class="gallery-scroll" id="gallery">
-          <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /></div>
-          <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /></div>
-          <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /></div>
-          <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /></div>
+          <div class="gallery-track" id="gallery-track">
+            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /></div>
+            <!-- Duplicate for seamless loop -->
+            <div class="gallery-card"><img src="/preview1.jpg" alt="Zombie Boy" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview2.jpg" alt="Zombie Bear" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview3.jpg" alt="Zombie Croc" loading="lazy" /></div>
+            <div class="gallery-card"><img src="/preview4.jpg" alt="Zombie Monkey" loading="lazy" /></div>
+          </div>
         </div>
         <div class="scroll-hint">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          <span>Swipe to explore</span>
+          <span>⚡ Auto-scrolling preview</span>
         </div>
       </div>
 
