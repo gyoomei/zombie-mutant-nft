@@ -19,301 +19,497 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
     <style>
-      * { margin: 0; padding: 0; box-sizing: border-box; }
+      * { margin: 0; padding: 0; box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
 
       :root {
-        --bg: #0a0a0a;
-        --card: #141414;
-        --card-border: #1f1f1f;
-        --text: #e5e5e5;
-        --text-dim: #737373;
+        --bg: #09090b;
+        --bg-elevated: #111113;
+        --card: rgba(18, 18, 22, 0.8);
+        --card-border: rgba(255, 255, 255, 0.06);
+        --card-border-hover: rgba(255, 255, 255, 0.12);
+        --text: #fafafa;
+        --text-secondary: #a1a1aa;
+        --text-muted: #52525b;
         --green: #22c55e;
-        --green-dim: #166534;
+        --green-glow: rgba(34, 197, 94, 0.4);
+        --green-dim: rgba(34, 197, 94, 0.15);
         --red: #ef4444;
-        --red-dim: #7f1d1d;
+        --red-glow: rgba(239, 68, 68, 0.4);
         --purple: #a855f7;
-        --purple-dim: #6b21a8;
-        --accent: #22c55e;
+        --purple-glow: rgba(168, 85, 247, 0.4);
+        --gradient: linear-gradient(135deg, var(--green), var(--purple));
+        --radius: 16px;
+        --radius-sm: 12px;
+        --radius-xs: 8px;
       }
 
       body {
-        font-family: 'Inter', system-ui, sans-serif;
+        font-family: 'Inter', -apple-system, system-ui, sans-serif;
         background: var(--bg);
         color: var(--text);
         min-height: 100dvh;
         overflow-x: hidden;
+        -webkit-font-smoothing: antialiased;
       }
 
+      /* ─── App Shell ─── */
       .app {
         max-width: 420px;
         margin: 0 auto;
-        padding: 16px;
+        padding: 20px 16px;
         min-height: 100dvh;
         display: flex;
         flex-direction: column;
         gap: 16px;
+        position: relative;
       }
 
-      /* Header */
+      /* ─── Ambient Glow ─── */
+      .ambient-glow {
+        position: fixed;
+        top: -100px;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 400px;
+        height: 400px;
+        background: radial-gradient(circle, rgba(168, 85, 247, 0.08) 0%, transparent 70%);
+        pointer-events: none;
+        z-index: 0;
+        animation: ambientPulse 8s ease-in-out infinite;
+      }
+      @keyframes ambientPulse {
+        0%, 100% { opacity: 0.5; transform: translateX(-50%) scale(1); }
+        50% { opacity: 1; transform: translateX(-50%) scale(1.1); }
+      }
+
+      /* ─── Header ─── */
       .header {
         text-align: center;
-        padding: 20px 0 8px;
+        padding: 24px 0 8px;
+        position: relative;
+        z-index: 1;
+      }
+      .header-icon {
+        font-size: 2.5rem;
+        margin-bottom: 8px;
+        animation: float 3s ease-in-out infinite;
+      }
+      @keyframes float {
+        0%, 100% { transform: translateY(0); }
+        50% { transform: translateY(-6px); }
       }
       .header h1 {
-        font-size: 1.5rem;
+        font-size: 1.6rem;
         font-weight: 800;
-        background: linear-gradient(135deg, var(--green), var(--purple));
+        letter-spacing: -0.03em;
+        background: var(--gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
       }
       .header p {
-        color: var(--text-dim);
-        font-size: 0.85rem;
-        margin-top: 4px;
+        color: var(--text-secondary);
+        font-size: 0.82rem;
+        margin-top: 6px;
+        font-weight: 400;
       }
 
-      /* Gallery */
-      .gallery-section {
+      /* ─── Steps ─── */
+      .steps {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+        padding: 4px 0;
+      }
+      .step {
+        width: 32px;
+        height: 4px;
+        border-radius: 2px;
+        background: var(--card-border);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .step.active {
+        background: var(--green);
+        box-shadow: 0 0 12px var(--green-glow);
+        width: 48px;
+      }
+      .step.done {
+        background: var(--purple);
+        box-shadow: 0 0 8px var(--purple-glow);
+      }
+
+      /* ─── Glass Card ─── */
+      .glass-card {
         background: var(--card);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
         border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 14px;
-        overflow: hidden;
+        border-radius: var(--radius);
+        padding: 16px;
+        transition: border-color 0.3s, box-shadow 0.3s;
+      }
+      .glass-card:hover {
+        border-color: var(--card-border-hover);
+      }
+
+      /* ─── Gallery ─── */
+      .gallery-section {
+        position: relative;
+        z-index: 1;
       }
       .gallery-label {
-        font-size: 0.8rem;
-        color: var(--text-dim);
+        font-size: 0.72rem;
+        color: var(--text-muted);
         margin-bottom: 10px;
         font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
       }
       .gallery-scroll {
         display: flex;
-        gap: 12px;
+        gap: 10px;
         overflow-x: auto;
         scroll-snap-type: x mandatory;
         -webkit-overflow-scrolling: touch;
         scrollbar-width: none;
-        padding-bottom: 4px;
+        padding: 4px 0;
+        margin: 0 -4px;
+        padding-left: 4px;
+        padding-right: 4px;
       }
       .gallery-scroll::-webkit-scrollbar { display: none; }
       .gallery-card {
         flex: 0 0 auto;
-        width: 140px;
-        height: 140px;
-        border-radius: 12px;
+        width: 130px;
+        height: 130px;
+        border-radius: var(--radius-sm);
         overflow: hidden;
         scroll-snap-align: start;
-        border: 2px solid var(--card-border);
-        transition: border-color 0.3s;
+        border: 1px solid var(--card-border);
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
       }
-      .gallery-card:hover { border-color: var(--green); }
+      .gallery-card::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, transparent 60%, rgba(0,0,0,0.6));
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .gallery-card:hover {
+        border-color: var(--green);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 24px rgba(0,0,0,0.4), 0 0 0 1px var(--green-dim);
+      }
+      .gallery-card:hover::after { opacity: 1; }
       .gallery-card img {
         width: 100%;
         height: 100%;
         object-fit: cover;
+        transition: transform 0.5s;
       }
+      .gallery-card:hover img { transform: scale(1.05); }
 
-      /* User Card */
+      /* ─── User Card ─── */
       .user-card {
-        background: var(--card);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 16px;
         display: flex;
         align-items: center;
-        gap: 12px;
+        gap: 14px;
+        animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      @keyframes slideUp {
+        from { opacity: 0; transform: translateY(12px); }
+        to { opacity: 1; transform: translateY(0); }
+      }
+      .user-card .avatar-wrap {
+        position: relative;
+        width: 52px;
+        height: 52px;
+        flex-shrink: 0;
       }
       .user-card .avatar {
-        width: 48px;
-        height: 48px;
+        width: 52px;
+        height: 52px;
         border-radius: 50%;
         object-fit: cover;
         border: 2px solid var(--green);
+        box-shadow: 0 0 16px var(--green-glow);
       }
-      .user-card .user-info {
-        flex: 1;
+      .user-card .avatar-ring {
+        position: absolute;
+        inset: -3px;
+        border-radius: 50%;
+        border: 2px solid transparent;
+        border-top-color: var(--purple);
+        animation: spin 3s linear infinite;
       }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .user-card .user-info { flex: 1; min-width: 0; }
       .user-card .username {
         font-weight: 700;
-        font-size: 0.95rem;
+        font-size: 1rem;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
       }
       .user-card .fid {
-        color: var(--text-dim);
-        font-size: 0.8rem;
+        color: var(--text-muted);
+        font-size: 0.75rem;
+        margin-top: 2px;
       }
 
-      /* Preview Area */
+      /* ─── Preview Area ─── */
       .preview-area {
-        background: var(--card);
-        border: 1px solid var(--card-border);
-        border-radius: 16px;
-        padding: 16px;
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
-        min-height: 200px;
+        gap: 16px;
+        min-height: 220px;
         justify-content: center;
       }
-      .preview-area .images {
+      .preview-placeholder {
+        color: var(--text-muted);
+        font-size: 0.85rem;
+        text-align: center;
+        line-height: 1.6;
+      }
+      .preview-placeholder .emoji-big {
+        font-size: 2.5rem;
+        display: block;
+        margin-bottom: 8px;
+      }
+      .preview-images {
         display: flex;
         gap: 12px;
         align-items: center;
         justify-content: center;
         width: 100%;
+        animation: fadeIn 0.6s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .preview-area .img-box {
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95); }
+        to { opacity: 1; transform: scale(1); }
+      }
+      .img-box {
         flex: 1;
         text-align: center;
+        max-width: 160px;
       }
-      .preview-area .img-box img {
+      .img-box img {
         width: 100%;
-        max-width: 150px;
         aspect-ratio: 1;
         object-fit: cover;
-        border-radius: 12px;
+        border-radius: var(--radius-sm);
         border: 2px solid var(--card-border);
+        transition: all 0.3s;
       }
-      .preview-area .img-box .label {
-        font-size: 0.75rem;
-        color: var(--text-dim);
-        margin-top: 6px;
+      .img-box.mutant img {
+        border-color: var(--green);
+        box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3);
       }
-      .preview-area .arrow {
-        font-size: 1.5rem;
+      .img-box .label {
+        font-size: 0.7rem;
+        color: var(--text-muted);
+        margin-top: 8px;
+        font-weight: 500;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .arrow-divider {
+        font-size: 1.2rem;
         flex-shrink: 0;
+        color: var(--text-muted);
+        animation: arrowPulse 2s ease-in-out infinite;
       }
-      .preview-area .placeholder-text {
-        color: var(--text-dim);
-        font-size: 0.85rem;
-        text-align: center;
+      @keyframes arrowPulse {
+        0%, 100% { opacity: 0.4; transform: translateX(0); }
+        50% { opacity: 1; transform: translateX(4px); }
       }
 
-      /* Loading State */
+      /* ─── Loading ─── */
       .loading-overlay {
         display: none;
         flex-direction: column;
         align-items: center;
-        gap: 12px;
-        padding: 20px;
+        gap: 16px;
+        padding: 24px;
       }
       .loading-overlay.active { display: flex; }
 
-      .spinner {
-        width: 40px;
-        height: 40px;
+      .spinner-ring {
+        width: 48px;
+        height: 48px;
+        border-radius: 50%;
         border: 3px solid var(--card-border);
         border-top-color: var(--green);
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite;
+        border-right-color: var(--purple);
+        animation: spin 1s linear infinite;
+        box-shadow: 0 0 20px var(--green-glow);
       }
-      @keyframes spin { to { transform: rotate(360deg); } }
-
       .loading-text {
-        color: var(--text-dim);
-        font-size: 0.85rem;
+        color: var(--text-secondary);
+        font-size: 0.82rem;
+        font-weight: 500;
+      }
+      .loading-dots::after {
+        content: '';
+        animation: dots 1.5s steps(4) infinite;
+      }
+      @keyframes dots {
+        0% { content: ''; }
+        25% { content: '.'; }
+        50% { content: '..'; }
+        75% { content: '...'; }
       }
 
-      /* Buttons */
-      .btn {
-        width: 100%;
-        padding: 14px;
-        border: none;
-        border-radius: 12px;
-        font-family: inherit;
-        font-size: 0.95rem;
-        font-weight: 700;
-        cursor: pointer;
-        transition: all 0.2s;
-      }
-      .btn:disabled {
-        opacity: 0.4;
-        cursor: not-allowed;
-      }
-      .btn-primary {
-        background: var(--green);
-        color: #000;
-      }
-      .btn-primary:hover:not(:disabled) {
-        background: #16a34a;
-        transform: translateY(-1px);
-      }
-      .btn-secondary {
-        background: var(--card);
-        color: var(--text);
-        border: 1px solid var(--card-border);
-      }
-      .btn-secondary:hover:not(:disabled) {
-        border-color: var(--green);
-      }
-      .btn-mint {
-        background: linear-gradient(135deg, var(--purple), var(--green));
-        color: #000;
-      }
-      .btn-mint:hover:not(:disabled) {
-        opacity: 0.9;
-        transform: translateY(-1px);
-      }
-
-      /* Actions */
+      /* ─── Buttons ─── */
       .actions {
         display: flex;
         flex-direction: column;
         gap: 10px;
       }
+      .btn {
+        width: 100%;
+        padding: 16px;
+        border: none;
+        border-radius: var(--radius-sm);
+        font-family: inherit;
+        font-size: 0.92rem;
+        font-weight: 700;
+        cursor: pointer;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        letter-spacing: -0.01em;
+      }
+      .btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+        transform: none !important;
+      }
+      .btn::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(255,255,255,0.1) 0%, transparent 100%);
+        opacity: 0;
+        transition: opacity 0.3s;
+      }
+      .btn:hover::before { opacity: 1; }
 
-      /* Status */
-      .status-bar {
+      .btn-primary {
+        background: var(--gradient);
+        color: #000;
+        box-shadow: 0 4px 16px var(--green-glow);
+      }
+      .btn-primary:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px var(--green-glow);
+      }
+      .btn-primary:active:not(:disabled) {
+        transform: translateY(0);
+      }
+
+      .btn-mint {
+        background: linear-gradient(135deg, var(--purple), var(--green));
+        color: #000;
+        box-shadow: 0 4px 16px var(--purple-glow);
+      }
+      .btn-mint:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 8px 28px var(--purple-glow);
+      }
+
+      .btn-secondary {
         background: var(--card);
+        color: var(--text);
         border: 1px solid var(--card-border);
-        border-radius: 12px;
+        backdrop-filter: blur(10px);
+      }
+      .btn-secondary:hover:not(:disabled) {
+        border-color: var(--green);
+        box-shadow: 0 0 0 1px var(--green-dim);
+        transform: translateY(-1px);
+      }
+
+      /* ─── Status Bar ─── */
+      .status-bar {
         padding: 12px 16px;
-        font-size: 0.8rem;
-        color: var(--text-dim);
+        border-radius: var(--radius-xs);
+        font-size: 0.78rem;
         text-align: center;
+        font-weight: 500;
+        border: 1px solid var(--card-border);
+        background: var(--card);
+        backdrop-filter: blur(10px);
+        color: var(--text-muted);
+        transition: all 0.3s;
       }
-      .status-bar.success { border-color: var(--green-dim); color: var(--green); }
-      .status-bar.error { border-color: var(--red-dim); color: var(--red); }
+      .status-bar.success {
+        border-color: var(--green-dim);
+        color: var(--green);
+        background: rgba(34, 197, 94, 0.05);
+      }
+      .status-bar.error {
+        border-color: rgba(239, 68, 68, 0.2);
+        color: var(--red);
+        background: rgba(239, 68, 68, 0.05);
+      }
 
-      /* Steps */
-      .steps {
-        display: flex;
-        gap: 8px;
-        justify-content: center;
-      }
-      .step {
-        width: 8px;
-        height: 8px;
-        border-radius: 50%;
-        background: var(--card-border);
-        transition: background 0.3s;
-      }
-      .step.active { background: var(--green); }
-      .step.done { background: var(--purple); }
-
-      /* Footer */
+      /* ─── Footer ─── */
       .footer {
         margin-top: auto;
         text-align: center;
-        padding: 12px;
-        color: var(--text-dim);
-        font-size: 0.7rem;
+        padding: 16px 0 8px;
+        color: var(--text-muted);
+        font-size: 0.68rem;
+        letter-spacing: 0.02em;
       }
       .footer a {
         color: var(--green);
         text-decoration: none;
+        transition: opacity 0.2s;
+      }
+      .footer a:hover { opacity: 0.7; }
+
+      /* ─── Scroll hint ─── */
+      .scroll-hint {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        color: var(--text-muted);
+        font-size: 0.68rem;
+        padding: 4px 0;
+      }
+      .scroll-hint svg {
+        width: 14px;
+        height: 14px;
+        animation: swipeHint 2s ease-in-out infinite;
+      }
+      @keyframes swipeHint {
+        0%, 100% { transform: translateX(0); opacity: 0.4; }
+        50% { transform: translateX(6px); opacity: 1; }
+      }
+
+      /* ─── Responsive ─── */
+      @media (max-width: 360px) {
+        .gallery-card { width: 110px; height: 110px; }
+        .header h1 { font-size: 1.4rem; }
       }
     </style>
   </head>
   <body>
+    <div class="ambient-glow"></div>
     <div class="app">
       <!-- Header -->
       <div class="header">
-        <h1>🧟 Zombie Mutant NFT</h1>
+        <div class="header-icon">🧟</div>
+        <h1>Zombie Mutant NFT</h1>
         <p>Your Farcaster pfp, reimagined in undead horror</p>
       </div>
 
@@ -325,19 +521,26 @@
         <div class="step" id="step-4"></div>
       </div>
 
-      <!-- Preview Gallery -->
-      <div class="gallery-section">
-        <div class="gallery-label">🧟 Mutant Previews</div>
+      <!-- Gallery -->
+      <div class="gallery-section glass-card">
+        <div class="gallery-label">Mutant Previews</div>
         <div class="gallery-scroll" id="gallery">
           <div class="gallery-card"><img src="/preview1.jpg" alt="Mutant Ape" loading="lazy" /></div>
           <div class="gallery-card"><img src="/preview2.jpg" alt="Mutant Cyborg" loading="lazy" /></div>
           <div class="gallery-card"><img src="/preview3.jpg" alt="Mutant Wolf" loading="lazy" /></div>
         </div>
+        <div class="scroll-hint">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          <span>Swipe to explore</span>
+        </div>
       </div>
 
       <!-- User Card -->
-      <div class="user-card" id="user-card" style="display:none">
-        <img class="avatar" id="user-avatar" src="" alt="avatar" />
+      <div class="user-card glass-card" id="user-card" style="display:none">
+        <div class="avatar-wrap">
+          <img class="avatar" id="user-avatar" src="" alt="avatar" />
+          <div class="avatar-ring"></div>
+        </div>
         <div class="user-info">
           <div class="username" id="user-name">Loading...</div>
           <div class="fid" id="user-fid">FID: —</div>
@@ -345,24 +548,27 @@
       </div>
 
       <!-- Preview -->
-      <div class="preview-area" id="preview-area">
-        <div class="placeholder-text" id="preview-placeholder">
-          Open in Farcaster to load your profile picture 🧟
-        </div>
-        <div class="images" id="preview-images" style="display:none">
-          <div class="img-box">
-            <img id="img-original" src="" alt="Original" />
-            <div class="label">Original</div>
+      <div class="glass-card">
+        <div class="preview-area" id="preview-area">
+          <div class="preview-placeholder" id="preview-placeholder">
+            <span class="emoji-big">🧟</span>
+            Open in Farcaster to load your profile picture
           </div>
-          <div class="arrow">→</div>
-          <div class="img-box">
-            <img id="img-mutant" src="" alt="Mutant" />
-            <div class="label">Mutant 🧟</div>
+          <div class="preview-images" id="preview-images" style="display:none">
+            <div class="img-box">
+              <img id="img-original" src="" alt="Original" />
+              <div class="label">Original</div>
+            </div>
+            <div class="arrow-divider">→</div>
+            <div class="img-box mutant">
+              <img id="img-mutant" src="" alt="Mutant" />
+              <div class="label">Mutant 🧟</div>
+            </div>
           </div>
-        </div>
-        <div class="loading-overlay" id="loading">
-          <div class="spinner"></div>
-          <div class="loading-text" id="loading-text">Transforming into mutant...</div>
+          <div class="loading-overlay" id="loading">
+            <div class="spinner-ring"></div>
+            <div class="loading-text" id="loading-text">Analyzing your pfp<span class="loading-dots"></span></div>
+          </div>
         </div>
       </div>
 
@@ -386,11 +592,10 @@
 
       <!-- Footer -->
       <div class="footer">
-        Built on Base · Powered by AI · <a href="#">Zombie Mutant NFT</a>
+        Built on Base · Powered by AI · Zombie Mutant NFT
       </div>
     </div>
 
-    <!-- SDK init (separate file for reliability) -->
     <script src="/farcaster-sdk-init.js"></script>
     <script type="module" src="/src/app.js"></script>
   </body>
