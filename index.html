@@ -88,57 +88,130 @@
       /* ─── Header ─── */
       .header {
         text-align: center;
-        padding: 24px 0 8px;
+        padding: 20px 16px 6px;
         position: relative;
         z-index: 1;
       }
+      .header-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: rgba(34, 197, 94, 0.1);
+        border: 1px solid rgba(34, 197, 94, 0.25);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--green);
+        margin-bottom: 12px;
+        letter-spacing: 0.03em;
+        text-transform: uppercase;
+      }
+      .header-badge .pulse-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+        background: var(--green);
+        animation: pulse 2s ease-in-out infinite;
+      }
+      @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.4; transform: scale(0.8); }
+      }
       .header-icon {
-        font-size: 2.5rem;
+        font-size: 2.8rem;
         margin-bottom: 8px;
         animation: float 3s ease-in-out infinite;
+        filter: drop-shadow(0 0 20px rgba(34, 197, 94, 0.5));
       }
       @keyframes float {
         0%, 100% { transform: translateY(0); }
         50% { transform: translateY(-6px); }
       }
       .header h1 {
-        font-size: 1.6rem;
-        font-weight: 800;
-        letter-spacing: -0.03em;
+        font-size: 1.7rem;
+        font-weight: 900;
+        letter-spacing: -0.04em;
         background: var(--gradient);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
+        line-height: 1.1;
       }
       .header p {
         color: var(--text-secondary);
-        font-size: 0.82rem;
+        font-size: 0.8rem;
         margin-top: 6px;
         font-weight: 400;
       }
 
-      /* ─── Steps ─── */
+      /* ─── Steps with Labels ─── */
+      .steps-wrapper {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 6px;
+      }
       .steps {
         display: flex;
-        gap: 6px;
-        justify-content: center;
-        padding: 4px 0;
+        gap: 8px;
+        align-items: center;
       }
       .step {
-        width: 32px;
-        height: 4px;
-        border-radius: 2px;
-        background: var(--card-border);
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 4px;
+        opacity: 0.35;
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
       }
-      .step.active {
-        background: var(--green);
-        box-shadow: 0 0 12px var(--green-glow);
-        width: 48px;
+      .step.active { opacity: 1; }
+      .step.done { opacity: 0.7; }
+      .step-dot {
+        width: 8px;
+        height: 8px;
+        border-radius: 50%;
+        background: var(--card-border-hover);
+        transition: all 0.4s;
       }
-      .step.done {
+      .step-bar {
+        width: 28px;
+        height: 3px;
+        border-radius: 2px;
+        background: var(--card-border);
+        transition: all 0.5s;
+      }
+      .step.active .step-dot {
+        background: var(--green);
+        box-shadow: 0 0 10px var(--green-glow);
+        transform: scale(1.2);
+      }
+      .step.active .step-bar {
+        background: var(--green);
+        box-shadow: 0 0 8px var(--green-glow);
+      }
+      .step.done .step-dot {
         background: var(--purple);
         box-shadow: 0 0 8px var(--purple-glow);
+      }
+      .step.done .step-bar {
+        background: var(--purple);
+      }
+      .step-label {
+        font-size: 0.6rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        color: var(--text-muted);
+        transition: color 0.3s;
+      }
+      .step.active .step-label { color: var(--green); }
+      .step.done .step-label { color: var(--purple); }
+      .step-connector {
+        width: 20px;
+        height: 2px;
+        background: var(--card-border);
+        margin-bottom: 14px;
       }
 
       /* ─── Glass Card ─── */
@@ -711,17 +784,38 @@
     <div class="app">
       <!-- Header -->
       <div class="header">
+        <div class="header-badge">
+          <div class="pulse-dot"></div>
+          <span id="mint-counter">Live on Base</span>
+        </div>
         <div class="header-icon">🧟</div>
         <h1>Zombie Mutant NFT</h1>
-        <p>Your Farcaster pfp, reimagined in undead horror</p>
+        <p>Your pfp → undead horror → on-chain</p>
       </div>
 
-      <!-- Steps -->
-      <div class="steps">
-        <div class="step active" id="step-1"></div>
-        <div class="step" id="step-2"></div>
-        <div class="step" id="step-3"></div>
-        <div class="step" id="step-4"></div>
+      <!-- Steps with Labels -->
+      <div class="steps-wrapper">
+        <div class="steps">
+          <div class="step active" id="step-1">
+            <div class="step-dot"></div>
+            <div class="step-label">Connect</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-2">
+            <div class="step-dot"></div>
+            <div class="step-label">Generate</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-3">
+            <div class="step-dot"></div>
+            <div class="step-label">Mint</div>
+          </div>
+          <div class="step-connector"></div>
+          <div class="step" id="step-4">
+            <div class="step-dot"></div>
+            <div class="step-label">Share</div>
+          </div>
+        </div>
       </div>
 
       <!-- Gallery -->
