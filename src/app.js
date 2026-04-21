@@ -745,7 +745,9 @@ async function mintNFT() {
     const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
-    const receipt = await tx.wait();
+    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+    const receipt = await publicProvider.waitForTransaction(tx.hash);
+    if (!receipt) throw new Error('Transaction was sent but receipt was not found yet. Please check Basescan.');
 
     // 6. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
@@ -863,7 +865,9 @@ els.btnMint.addEventListener('click', async (e) => {
     const tx = await signer.sendTransaction(mintTx);
 
     setStatus(`Transaction sent: ${tx.hash.slice(0,10)}...`);
-    const receipt = await tx.wait();
+    const publicProvider = new ethers.JsonRpcProvider('https://mainnet.base.org');
+    const receipt = await publicProvider.waitForTransaction(tx.hash);
+    if (!receipt) throw new Error('Transaction was sent but receipt was not found yet. Please check Basescan.');
 
     // 5. Get token ID from event
     const mintEvent = receipt.logs.find(log => {
