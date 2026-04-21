@@ -15,6 +15,7 @@ const BASE_CHAIN_PARAMS = {
   rpcUrls: ['https://mainnet.base.org'],
   blockExplorerUrls: ['https://basescan.org'],
 };
+const APP_URL = `${window.location.origin}/?v=3`;
 
 // ─── Generation Counter (localStorage) ────────────────────
 function getGenCount() {
@@ -36,6 +37,7 @@ const state = {
   pfpUrl: null,
   mutantUrl: null,
   lastIpfs: null,
+  lastTokenNumber: null,
   step: 1,
 };
 
@@ -564,17 +566,26 @@ async function generateMutantFallback(pfpUrl, name) {
 async function shareOnFarcaster() {
   if (!state.sdk) return;
 
-  const text = `I just turned myself into a Zombie Mutant! 🧟💀\n\nGenerated with AI from my Farcaster pfp.\n\n#ZombieMutantNFT #Farcaster`;
+  const shareText = state.mutantUrl
+    ? `Just minted Zombie Mutant #${state.lastTokenNumber || '?'} on Base 🧟⚡\n\nTurn your Farcaster pfp into a mutant and mint yours too. Tap Mint Now.`
+    : `Zombie Mutant NFT on Base 🧟⚡\n\nTurn your Farcaster pfp into a mutant and mint yours too. Tap Mint Now.`;
 
   try {
     const nftPreview = state.lastIpfs?.imageGateway || state.lastIpfs?.metadataGateway || '';
+    const embeds = [];
+    embeds.push(APP_URL);
+    if (nftPreview) embeds.push(nftPreview);
     await state.sdk.actions.composeCast({
-      text,
-      embeds: nftPreview ? [nftPreview] : [],
+      text: shareText,
+      embeds,
     });
   } catch (e) {
     // Fallback: clipboard + warpcast deep link
-    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(text)}`;
+    const fallbackText = `${shareText}\n\n${APP_URL}`;
+    const warpcastUrl = `https://warpcast.com/~/compose?text=${encodeURIComponent(fallbackText)}`;
+    try {
+      await navigator.clipboard.writeText(fallbackText);
+    } catch {}
     window.open(warpcastUrl, '_blank');
   }
 }
@@ -694,7 +705,7 @@ els.btnGenerate.addEventListener('click', async (e) => {
     // Show action buttons
     els.btnGenerate.style.display = 'none';
     els.btnMint.style.display = 'block';
-    els.btnShare.style.display = 'block';
+    els.btnShare.style.display = 'none';
 
     setStep(4);
     const remaining = getRemaining();
@@ -807,6 +818,7 @@ async function mintNFT() {
       tokenNumber = (Number(parsed.args.tokenId) + 1).toString();
     }
 
+    state.lastTokenNumber = tokenNumber;
     setStep(4);
     setStatus(`NFT Minted! Token #${tokenNumber} 🧟🎉`, 'success');
     spawnConfetti();
@@ -816,14 +828,9 @@ async function mintNFT() {
     // Show mint result
     els.btnMint.textContent = 'Minted! ✅';
     els.btnMint.disabled = true;
+    els.btnShare.style.display = 'block';
+    els.btnShare.textContent = 'Share Mint';
 
-    // Share option
-    if (state.sdk?.actions?.composeCast) {
-      const shareText = `I just minted Zombie Mutant #${tokenNumber}! 🧟💀\n\nAI-generated zombie NFT from my Farcaster pfp on Base.\n\nhttps://basescan.org/tx/${tx.hash}\n\n#ZombieMutantNFT #Base #Farcaster`;
-      setTimeout(() => {
-        state.sdk.actions.composeCast({ text: shareText });
-      }, 2000);
-    }
 
   } catch (e) {
     console.error('Mint error:', e);
