@@ -407,13 +407,14 @@
         display: flex;
         flex-direction: column;
         align-items: center;
-        gap: 16px;
-        min-height: 220px;
+        gap: 14px;
+        min-height: 240px;
         justify-content: center;
+        position: relative;
       }
       .preview-placeholder {
         color: var(--text-muted);
-        font-size: 0.85rem;
+        font-size: 0.82rem;
         text-align: center;
         line-height: 1.6;
       }
@@ -422,9 +423,62 @@
         display: block;
         margin-bottom: 8px;
       }
+
+      /* Mystery Box - bigger with animated glow border */
+      .mystery-box-wrap {
+        position: relative;
+        width: 130px;
+        height: 130px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .mystery-box-wrap::before {
+        content: '';
+        position: absolute;
+        inset: -3px;
+        border-radius: 18px;
+        background: linear-gradient(135deg, var(--purple), var(--green), var(--purple));
+        background-size: 200% 200%;
+        animation: glowBorder 3s ease-in-out infinite;
+        z-index: -1;
+      }
+      @keyframes glowBorder {
+        0%, 100% { background-position: 0% 50%; }
+        50% { background-position: 100% 50%; }
+      }
+      .mystery-box-wrap img {
+        width: 130px;
+        height: 130px;
+        border-radius: 14px;
+        border: 2px solid rgba(168,85,247,0.3);
+        box-shadow: 0 0 20px rgba(168,85,247,0.2), 0 8px 32px rgba(0,0,0,0.4);
+        object-fit: cover;
+      }
+      /* Scan line overlay during loading */
+      .mystery-box-wrap.loading::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 14px;
+        background: repeating-linear-gradient(
+          0deg,
+          transparent,
+          transparent 2px,
+          rgba(168, 85, 247, 0.05) 2px,
+          rgba(168, 85, 247, 0.05) 4px
+        );
+        animation: scanMove 1.5s linear infinite;
+        pointer-events: none;
+      }
+      @keyframes scanMove {
+        0% { background-position: 0 0; }
+        100% { background-position: 0 40px; }
+      }
+
       .preview-images {
         display: flex;
-        gap: 12px;
+        gap: 14px;
         align-items: center;
         justify-content: center;
         width: 100%;
@@ -437,7 +491,8 @@
       .img-box {
         flex: 1;
         text-align: center;
-        max-width: 160px;
+        max-width: 155px;
+        position: relative;
       }
       .img-box img {
         width: 100%;
@@ -447,14 +502,29 @@
         border: 2px solid var(--card-border);
         transition: all 0.3s;
       }
+      .img-box.mutant {
+        position: relative;
+      }
+      /* Glow border on mutant box */
+      .img-box.mutant::before {
+        content: '';
+        position: absolute;
+        inset: -3px;
+        border-radius: calc(var(--radius-sm) + 3px);
+        background: linear-gradient(135deg, var(--green), var(--purple), var(--green));
+        background-size: 200% 200%;
+        animation: glowBorder 3s ease-in-out infinite;
+        z-index: -1;
+        opacity: 0.7;
+      }
       .img-box.mutant img {
         border-color: var(--green);
         box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3);
+        animation: mutantPulse 2s ease-in-out infinite;
       }
-      .img-box.mutant img[src*="mystery-box"] {
-        border-color: var(--purple);
-        box-shadow: 0 0 20px var(--purple-glow), 0 8px 32px rgba(0,0,0,0.3);
-        object-fit: cover;
+      @keyframes mutantPulse {
+        0%, 100% { box-shadow: 0 0 20px var(--green-glow), 0 8px 32px rgba(0,0,0,0.3); }
+        50% { box-shadow: 0 0 35px var(--green-glow), 0 0 60px rgba(34,197,94,0.2), 0 8px 32px rgba(0,0,0,0.3); }
       }
       .img-box .label {
         font-size: 0.7rem;
@@ -464,15 +534,144 @@
         text-transform: uppercase;
         letter-spacing: 0.05em;
       }
+      .img-box.mutant .label {
+        color: var(--green);
+      }
+      /* UNIQUE MUTANT badge */
+      .unique-badge {
+        position: absolute;
+        top: -8px;
+        left: 50%;
+        transform: translateX(-50%);
+        background: linear-gradient(135deg, var(--green), var(--purple));
+        color: #000;
+        font-size: 0.55rem;
+        font-weight: 800;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        padding: 3px 10px;
+        border-radius: 20px;
+        white-space: nowrap;
+        box-shadow: 0 0 12px var(--green-glow);
+        animation: badgePop 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        z-index: 5;
+      }
+      @keyframes badgePop {
+        0% { opacity: 0; transform: translateX(-50%) scale(0) translateY(10px); }
+        70% { transform: translateX(-50%) scale(1.1) translateY(-2px); }
+        100% { opacity: 1; transform: translateX(-50%) scale(1) translateY(0); }
+      }
+
+      /* Arrow divider - animated lightning bolt */
       .arrow-divider {
-        font-size: 1.2rem;
+        font-size: 1.4rem;
         flex-shrink: 0;
-        color: var(--text-muted);
-        animation: arrowPulse 2s ease-in-out infinite;
+        color: var(--green);
+        text-shadow: 0 0 10px var(--green-glow);
+        animation: arrowPulse 1.5s ease-in-out infinite;
+        position: relative;
       }
       @keyframes arrowPulse {
-        0%, 100% { opacity: 0.4; transform: translateX(0); }
-        50% { opacity: 1; transform: translateX(4px); }
+        0%, 100% { opacity: 0.5; transform: translateX(0) scale(1); }
+        50% { opacity: 1; transform: translateX(5px) scale(1.1); }
+      }
+      /* Lightning sparks */
+      .arrow-divider::before,
+      .arrow-divider::after {
+        content: '✦';
+        position: absolute;
+        font-size: 0.5rem;
+        color: var(--purple);
+        opacity: 0;
+        animation: sparkFly 2s ease-out infinite;
+      }
+      .arrow-divider::before {
+        top: -4px;
+        left: -8px;
+      }
+      .arrow-divider::after {
+        bottom: -4px;
+        right: -8px;
+        animation-delay: 1s;
+      }
+      @keyframes sparkFly {
+        0% { opacity: 1; transform: scale(1); }
+        100% { opacity: 0; transform: scale(0) translateY(-8px); }
+      }
+
+      /* Step Indicator during processing */
+      .step-indicator {
+        display: none;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+        padding: 0 8px;
+      }
+      .step-indicator.active { display: flex; }
+      .step-item {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        font-size: 0.72rem;
+        color: var(--text-muted);
+        transition: all 0.3s;
+        padding: 4px 8px;
+        border-radius: 6px;
+      }
+      .step-item.active {
+        color: var(--green);
+        background: rgba(34,197,94,0.08);
+      }
+      .step-item.done {
+        color: var(--purple);
+      }
+      .step-item-icon {
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        border: 2px solid currentColor;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.55rem;
+        flex-shrink: 0;
+        transition: all 0.3s;
+      }
+      .step-item.active .step-item-icon {
+        border-color: var(--green);
+        box-shadow: 0 0 8px var(--green-glow);
+        animation: stepPulse 1s ease-in-out infinite;
+      }
+      @keyframes stepPulse {
+        0%, 100% { transform: scale(1); }
+        50% { transform: scale(1.15); }
+      }
+      .step-item.done .step-item-icon {
+        background: var(--purple);
+        border-color: var(--purple);
+        color: #fff;
+      }
+      .step-item-text { font-weight: 500; }
+      .step-item-dots {
+        flex: 1;
+        height: 1px;
+        background: var(--card-border);
+        position: relative;
+        overflow: hidden;
+      }
+      .step-item.active .step-item-dots::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: var(--green);
+        animation: scanLine 1.5s ease-in-out infinite;
+      }
+      @keyframes scanLine {
+        0% { left: -100%; }
+        100% { left: 100%; }
       }
 
       /* ─── Loading ─── */
@@ -919,7 +1118,9 @@
         <div class="preview-area" id="preview-area">
           <!-- Before login -->
           <div class="preview-placeholder" id="preview-placeholder">
-            <img src="/mystery-box.jpg" alt="Mystery Box" style="width:100px;height:100px;border-radius:12px;margin-bottom:8px;" />
+            <div class="mystery-box-wrap" style="margin:0 auto 8px">
+              <img src="/mystery-box.jpg" alt="Mystery Box" />
+            </div>
             <span style="color:var(--text-muted);font-size:0.8rem;">Open in Farcaster to unlock</span>
           </div>
           <!-- After login: show original → mystery box / mutant -->
@@ -928,14 +1129,24 @@
               <img id="img-original" src="" alt="Original" />
               <div class="label">ORIGINAL</div>
             </div>
-            <div class="arrow-divider">→</div>
+            <div class="arrow-divider">⚡</div>
             <div class="img-box mutant">
+              <div class="unique-badge" id="unique-badge" style="display:none">✦ UNIQUE MUTANT</div>
               <img id="img-mutant" src="/mystery-box.jpg" alt="Mutant" />
               <div class="label">MUTANT 🧟</div>
             </div>
           </div>
+          <!-- Step indicator during processing -->
+          <div class="step-indicator" id="step-indicator">
+            <div class="step-item" id="s1"><div class="step-item-icon">1</div><div class="step-item-text">Analyzing pfp...</div><div class="step-item-dots"></div></div>
+            <div class="step-item" id="s2"><div class="step-item-icon">2</div><div class="step-item-text">Applying mutation...</div><div class="step-item-dots"></div></div>
+            <div class="step-item" id="s3"><div class="step-item-icon">3</div><div class="step-item-text">Adding accessories...</div><div class="step-item-dots"></div></div>
+          </div>
           <!-- Loading state -->
           <div class="loading-overlay" id="loading">
+            <div class="mystery-box-wrap loading" id="loading-box">
+              <img src="/mystery-box.jpg" alt="Loading" />
+            </div>
             <div class="dna-loader">
               <div class="dna-strand"></div>
               <div class="dna-strand"></div>

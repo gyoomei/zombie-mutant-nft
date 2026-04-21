@@ -87,6 +87,27 @@ function setStep(n) {
   }
 }
 
+// ─── Step indicator (preview area) ────────────────────────
+function setPreviewStep(n) {
+  const indicator = $('#step-indicator');
+  if (!indicator) return;
+  
+  for (let i = 1; i <= 3; i++) {
+    const el = $(`#s${i}`);
+    if (!el) continue;
+    el.classList.remove('active', 'done');
+    if (i < n) el.classList.add('done');
+    if (i === n) el.classList.add('active');
+  }
+}
+
+function showUniqueBadge() {
+  const badge = $('#unique-badge');
+  if (badge) {
+    badge.style.display = 'block';
+  }
+}
+
 // ─── Status ───────────────────────────────────────────────
 function setStatus(msg, type = '') {
   els.status.textContent = msg;
@@ -387,25 +408,35 @@ els.btnGenerate.addEventListener('click', async () => {
 
   els.btnGenerate.disabled = true;
   setStep(3);
+  
+  // Show step indicator + loading box
+  const indicator = $('#step-indicator');
+  if (indicator) indicator.classList.add('active');
+  setPreviewStep(1);
   showLoading('Transforming your pfp...');
   setStatus('Generating your zombie mutant...');
 
   try {
+    setPreviewStep(2); // Analyzing done, now applying mutation
     const result = await generateMutant(
       state.context?.user?.pfpUrl || '',
       username,
       displayName
     );
+    setPreviewStep(3); // Mutation applied, adding accessories
     state.mutantUrl = result.zombie;
 
     // Show result
     hideLoading();
+    const indicator = $('#step-indicator');
+    if (indicator) indicator.classList.remove('active');
     // Show original pfp if available
     if (result.original) {
       els.imgOriginal.src = result.original;
     }
     els.imgMutant.src = result.zombie;
     els.previewImages.style.display = 'flex';
+    showUniqueBadge(); // Show UNIQUE MUTANT badge
 
     // Show action buttons
     els.btnGenerate.style.display = 'none';
@@ -417,6 +448,8 @@ els.btnGenerate.addEventListener('click', async () => {
     setStatus(`Mutant created! 🧟 ${remaining}/100 left`, 'success');
   } catch (e) {
     hideLoading();
+    const indicator = $('#step-indicator');
+    if (indicator) indicator.classList.remove('active');
     els.previewPlaceholder.style.display = 'block';
     els.previewPlaceholder.textContent = `❌ Error: ${e.message}`;
     els.btnGenerate.disabled = false;
