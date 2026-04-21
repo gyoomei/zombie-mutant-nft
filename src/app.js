@@ -125,26 +125,54 @@ function initGallery() {
   if (els.userCardSkeleton) {
     els.userCardSkeleton.style.display = 'none';
   }
+
   const galleryImgs = els.gallery?.querySelectorAll('img') || [];
   let loaded = 0;
+  let revealed = false;
+
+  const revealGallery = () => {
+    if (revealed) return;
+    revealed = true;
+    showGallery();
+  };
+
+  // IMPORTANT: the gallery lives inside a display:none container in HTML.
+  // If we wait for image load before revealing it, the browser may never
+  // start fetching the lazy images. Show it immediately, then swap skeleton.
+  if (els.gallery) {
+    els.gallery.style.display = '';
+  }
+
   if (galleryImgs.length === 0) {
-    // No images, just hide skeleton
     if (els.gallerySkeleton) els.gallerySkeleton.style.display = 'none';
-    if (els.gallery) els.gallery.style.display = '';
+    revealGallery();
     return;
   }
+
+  // Fallback: never keep the gallery hidden forever.
+  const fallbackTimer = setTimeout(revealGallery, 1200);
+
   galleryImgs.forEach((img) => {
-    if (img.complete) {
+    if (img.complete && img.naturalWidth > 0) {
       loaded++;
-      if (loaded >= galleryImgs.length) showGallery();
+      if (loaded >= galleryImgs.length) {
+        clearTimeout(fallbackTimer);
+        revealGallery();
+      }
     } else {
       img.addEventListener('load', () => {
         loaded++;
-        if (loaded >= galleryImgs.length) showGallery();
+        if (loaded >= galleryImgs.length) {
+          clearTimeout(fallbackTimer);
+          revealGallery();
+        }
       });
       img.addEventListener('error', () => {
         loaded++;
-        if (loaded >= galleryImgs.length) showGallery();
+        if (loaded >= galleryImgs.length) {
+          clearTimeout(fallbackTimer);
+          revealGallery();
+        }
       });
     }
   });
@@ -582,7 +610,19 @@ async function init() {
   state.context = context;
 
   if (!context?.user) {
-    setStatus('Could not read Farcaster profile', 'error');
+    // Fallback to demo mode instead of freezing the UI on an error state.
+    // This keeps gallery/preview visible even when Farcaster context is missing.
+    els.btnGenerate.disabled = false;
+    initGallery();
+    initDemo();
+    state.context = {
+      user: { fid: 0, username: 'demo_user', displayName: 'Demo User', pfpUrl: '' }
+    };
+    els.userName.textContent = 'Demo User';
+    els.userFid.textContent = 'Demo Mode — not in Farcaster';
+    els.userCard.style.display = 'flex';
+    els.previewPlaceholder.textContent = 'Click Generate to test zombie mutant generation 🧟';
+    setStatus('Demo mode — open in Farcaster for live pfp', 'warning');
     return;
   }
 
