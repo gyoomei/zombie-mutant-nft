@@ -356,10 +356,51 @@ els.btnGenerate.addEventListener('click', async () => {
   const username = state.context?.user?.username || '';
   const displayName = state.context?.user?.displayName || '';
 
+  // ─── Payment check: $0.1 (0.00005 ETH) before generate ───
+  const GENERATE_PRICE = '0.00005'; // ETH ≈ $0.1
+  const OWNER_WALLET = '0x92C82520907b6Cfe61E363fe0E9f6B7c82fC7D59';
+
   els.btnGenerate.disabled = true;
+  setStatus('Connecting wallet for payment...');
+
+  try {
+    // Get provider
+    let provider;
+    if (state.sdk?.wallet?.getEthereumProvider) {
+      provider = await state.sdk.wallet.getEthereumProvider();
+    } else if (window.ethereum) {
+      provider = window.ethereum;
+    } else {
+      throw new Error('No wallet found. Open in Farcaster.');
+    }
+
+    // Request accounts
+    const accounts = await provider.request({ method: 'eth_requestAccounts' });
+    const userAddress = accounts[0];
+
+    // Send $0.1 payment to owner
+    setStatus(`Pay ${GENERATE_PRICE} ETH (~$0.1) to generate...`);
+    const ethersProvider = new ethers.BrowserProvider(provider);
+    const signer = await ethersProvider.getSigner();
+
+    const tx = await signer.sendTransaction({
+      to: OWNER_WALLET,
+      value: ethers.parseEther(GENERATE_PRICE),
+    });
+
+    setStatus(`Payment sent! Waiting confirmation...`);
+    await tx.wait();
+    setStatus('Payment confirmed! Generating mutant...');
+
+  } catch (e) {
+    els.btnGenerate.disabled = false;
+    setStatus(`Payment failed: ${e.message}`, 'error');
+    return;
+  }
+
+  // ─── Continue with generation ───
   setStep(3);
-  showLoading('Analyzing your pfp...');
-  setStatus('Analyzing your profile picture with AI vision...');
+  showLoading('Transforming your pfp...');
 
   try {
     const result = await generateMutant(
