@@ -231,7 +231,7 @@ function initDemo() {
   els.userName.textContent = 'Demo User';
   els.userFid.textContent = 'Demo Mode — not in Farcaster';
   els.btnGenerate.disabled = false;
-  setStatus(`Demo mode — ${getRemaining()}/100 generations left`, 'info', '🎮');
+  setStatus('Demo mode — open in Farcaster for live pfp', 'info', '🎮');
   els.previewPlaceholder.textContent = 'Click Generate to test zombie mutant generation 🧟';
 }
 function setStep(n) {
@@ -657,8 +657,7 @@ async function init() {
     // Enable generate button
     els.btnGenerate.disabled = false;
     setStep(2);
-    const remaining = getRemaining();
-    setStatus(`Ready — ${remaining}/100 generations left`, 'info', '🎯');
+    setStatus('Ready', 'info', '🎯');
   } else {
     setStatus('No profile picture found', 'error');
   }
@@ -708,8 +707,7 @@ els.btnGenerate.addEventListener('click', async (e) => {
     els.btnShare.style.display = 'none';
 
     setStep(4);
-    const remaining = getRemaining();
-    setStatus(`Mutant created! 🧟 ${remaining}/100 left`, 'success');
+    setStatus('Mutant created! 🧟', 'success');
   } catch (e) {
     hideLoading();
     const indicator = $('#step-indicator');
